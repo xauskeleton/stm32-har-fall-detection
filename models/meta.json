@@ -1,0 +1,26 @@
+{
+  "groups": [
+    "total_acc",
+    "body_acc",
+    "gyro"
+  ],
+  "use_fft": true,
+  "use_butter": false,
+  "mode": "causal",
+  "n_features": 120,
+  "kind": "logreg",
+  "arch": "logreg 120-12",
+  "linear": true,
+  "C": 0.1,
+  "params": 1452,
+  "flash_kb_f32": 5.7,
+  "fs": 50,
+  "window": 128,
+  "step": 64,
+  "metrics": {
+    "accuracy": 86.88,
+    "precision": 87.0,
+    "recall": 86.88,
+    "f1": 86.85
+  }
+}

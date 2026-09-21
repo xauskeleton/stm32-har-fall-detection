@@ -1,0 +1,28 @@
+# Data (qua lon cho git)
+data/
+data_raw/
+*.npz
+
+# Model artifacts: CO commit (logreg chi 16 KB, de repo tu chay duoc ngay)
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+env/
+.ipynb_checkpoints/
+
+# IDE
+.idea/
+.vscode/
+
+# Firmware build
+build/
+*.o
+*.elf
+*.bin
+*.hex
+
+# OS
+Thumbs.db
+.DS_Store
