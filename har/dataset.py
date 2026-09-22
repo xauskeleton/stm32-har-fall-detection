@@ -133,12 +133,6 @@ def load_phyphox_csv(path, is_acc=True):
     return interp1d(t, vals, axis=0, kind='linear', fill_value='extrapolate')(t_new)
 
 
-def load_uart_log(path):
-    """Log CSV tu board: ax,ay,az,gx,gy,gz (g / rad/s)."""
-    data = np.loadtxt(path, delimiter=',', ndmin=2)
-    return data[:, 0:3], data[:, 3:6]
-
-
 def load_pair(acc_path, gyro_path, fmt='auto'):
     """Doc 1 cap file acc/gyro, tra ve (acc, gyro) da can bang do dai."""
     if fmt == 'auto':
@@ -150,17 +144,3 @@ def load_pair(acc_path, gyro_path, fmt='auto'):
         acc, gyro = load_hapt_txt(acc_path), load_hapt_txt(gyro_path)
     n = min(len(acc), len(gyro))
     return acc[:n], gyro[:n]
-
-
-def load_ground_truth(path):
-    """File .gt.txt: '<t_bat_dau> <t_ket_thuc> <TEN_HOAT_DONG>' moi dong."""
-    name_to_id = {v: k for k, v in cfg.ACTIVITY_LABELS.items()}
-    out = []
-    with open(path) as f:
-        for line in f:
-            parts = line.split()
-            if len(parts) < 3:
-                continue
-            out.append((float(parts[0]), float(parts[1]),
-                        name_to_id.get(parts[2], -1), parts[2]))
-    return out

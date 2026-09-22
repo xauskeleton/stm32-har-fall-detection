@@ -104,7 +104,7 @@ har/                    thư viện Python dùng chung
   dsp.py                Butterworth SOS, median 3, tách gravity, cắt cửa sổ, 120 đặc trưng
   dataset.py            đọc HAPT RawData, Phyphox CSV, log UART, ground truth
   fall.py               state machine té ngã (bản tham chiếu của fall_detect.c)
-  model.py              đánh giá, lưu/nạp model, xuất trọng số cho C
+  model.py              đánh giá, lưu/nạp model
   export_c.py           sinh code C từ model đã huấn luyện
 scripts/
   train.py              huấn luyện, lưu models/
@@ -112,7 +112,7 @@ scripts/
   export_model.py       sinh firmware/.../model_params.*
 models/                 scaler.pkl, classifier.pkl, meta.json, sweep.json
 firmware/               sinh tự động — KHÔNG sửa tay
-  Core/Inc/model_params.h    hằng số, ngưỡng, khai báo
+  Core/Inc/model_params.h    hằng số, ngưỡng, khai báo extern
   Core/Src/model_params.c    hệ số biquad, scaler, ma trận 12×120
   test/golden_vectors.h      dữ liệu đối chiếu C vs Python
 docs/
@@ -156,9 +156,12 @@ python scripts/export_model.py
 python scripts/train.py --cache hapt_raw.npz
 ```
 
-Các script so sánh cấu hình (5 bộ đặc trưng × 8 model, thử nén thời gian) đã được gỡ bỏ
-sau khi chốt xong — số liệu còn nguyên trong `docs/DECISIONS.md` và `models/sweep.json`,
-code nằm ở commit `8174182` nếu cần chạy lại.
+Code cố định vào đúng cấu hình đã chốt — không còn cờ bật/tắt để thí nghiệm. Các script
+so sánh cấu hình (5 bộ đặc trưng × 8 model) đã gỡ sau khi chốt xong; số liệu còn nguyên trong
+`docs/DECISIONS.md` và `models/sweep.json`, code ở commit `8174182` nếu cần chạy lại.
+
+**Chạy lại `export_model.py` sau mỗi lần `train.py`** — nếu quên thì firmware dùng trọng số cũ
+mà không báo lỗi gì.
 
 ## Các quyết định kỹ thuật chính
 

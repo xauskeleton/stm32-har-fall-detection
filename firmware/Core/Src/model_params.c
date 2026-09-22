@@ -1,9 +1,8 @@
 /* SINH TU DONG boi scripts/export_model.py - KHONG SUA TAY. */
 #include "model_params.h"
 
-/* Butterworth bac 3, fc = 0.3 Hz, fs = 50 Hz, dang second-order sections.
- * Moi hang: b0, b1, b2, a0, a1, a2  (a0 = 1) */
-static const float SOS_GRAVITY[2][6] = {
+/* Butterworth bac 3, fc = 0.3 Hz, fs = 50 Hz, dang second-order sections */
+const float HAR_SOS_GRAVITY[2][6] = {
     {   /* 0 */
         6.451849e-06f, 1.2903698e-05f, 6.451849e-06f, 1.0f, -0.962994039f, 0.0f,
     },
@@ -13,7 +12,7 @@ static const float SOS_GRAVITY[2][6] = {
 };
 
 /* StandardScaler: luu san 1/scale de ben C chi phai NHAN, khong phai CHIA */
-static const float SCALER_MEAN[120] = {
+const float HAR_SCALER_MEAN[120] = {
     0.801371038f, 0.3517932f, 1.73203039f, -0.0727993548f, 0.907189429f, 0.237622693f,
     104.214371f, 4.93570662f, 214.52301f, 8.0487709f, 0.0396671481f, 0.32474336f,
     0.874301136f, -0.825689435f, 0.466749638f, 0.218246564f, 38.0107613f, 3.75747895f,
@@ -36,7 +35,7 @@ static const float SCALER_MEAN[120] = {
     0.775957406f, 0.208627954f, 90.4706421f, 4.34486532f, 162.575012f, 7.69726896f,
 };
 
-static const float SCALER_INV_SCALE[120] = {
+const float HAR_SCALER_INV_SCALE[120] = {
     2.75752354f, 13.4883833f, 2.0440166f, 2.72339272f, 3.53622937f, 18.2148895f,
     0.0234525111f, 1.05767751f, 0.00996546447f, 0.581341743f, 2.65898418f, 25.7016869f,
     2.62696004f, 2.21448684f, 5.57892704f, 31.1172791f, 0.0332334004f, 1.8801564f,
@@ -59,8 +58,8 @@ static const float SCALER_INV_SCALE[120] = {
     3.24448109f, 10.9413328f, 0.0287360605f, 0.590147495f, 0.00751514174f, 1.07526815f,
 };
 
-/* LogisticRegression: 12 lop x 120 dac trung */
-static const float WEIGHTS[12][120] = {
+/* LogisticRegression 12 lop x 120 dac trung */
+const float HAR_WEIGHTS[12][120] = {
     {   /* 0 */
         0.212268427f, 0.0848048925f, 0.287755013f, 0.11588379f, 0.248400539f, 0.0622979514f,
         0.227868438f, 0.266418755f, 0.339771211f, -0.155368075f, -0.0731752738f, 0.599074185f,
@@ -327,12 +326,12 @@ static const float WEIGHTS[12][120] = {
     },
 };
 
-static const float BIAS[12] = {
+const float HAR_BIAS[12] = {
     2.33096671f, 2.94253564f, 0.366463035f, -0.144262031f, -0.967202008f, -0.737362981f,
     -0.262515187f, -1.05183721f, -0.895570576f, -0.581770539f, -0.311825067f, -0.687619686f,
 };
 
-static const char *const LABEL_NAMES[12] = {
+static const char *const LABEL_NAMES[HAR_N_CLASSES] = {
     "WALKING",
     "WALKING_UPSTAIRS",
     "WALKING_DOWNSTAIRS",
@@ -346,12 +345,6 @@ static const char *const LABEL_NAMES[12] = {
     "STAND_TO_LIE",
     "LIE_TO_STAND",
 };
-
-const float *har_sos_gravity(int section) { return SOS_GRAVITY[section]; }
-const float *har_scaler_mean(void)        { return SCALER_MEAN; }
-const float *har_scaler_inv_scale(void)   { return SCALER_INV_SCALE; }
-const float *har_weights(int class_idx)   { return WEIGHTS[class_idx]; }
-const float *har_bias(void)               { return BIAS; }
 
 const char *har_label_name(int label)
 {

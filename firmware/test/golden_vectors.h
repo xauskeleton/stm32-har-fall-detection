@@ -3,9 +3,9 @@
  * Doi chieu C voi Python. Nap GOLDEN_ACC/GOLDEN_GYRO vao duong ong streaming,
  * so ket qua voi GOLDEN_FEATURES va GOLDEN_LABELS.
  *
- * NGUONG: dung sai so TUYET DOI < 1e-3, KHONG dung sai so tuong doi.
- * Ly do: body_acc_*_mean von ~ 0 theo dinh nghia, sai so tuong doi o do len toi
- * 1.96 du sai so tuyet doi chi 1.7e-05. Xem docs/DECISIONS.md muc 10.
+ * NGUONG: sai so TUYET DOI < 1e-3, KHONG dung sai so tuong doi. Ly do:
+ * body_acc_*_mean von ~ 0 theo dinh nghia nen sai so tuong doi o do len toi 1.96
+ * du sai so tuyet doi chi 1.7e-05. Xem docs/DECISIONS.md muc 10.
  */
 #ifndef GOLDEN_VECTORS_H
 #define GOLDEN_VECTORS_H
@@ -2459,6 +2459,6 @@ static const float GOLDEN_FEATURES[5][120] = {
     },
 };
 
-static const int GOLDEN_LABELS[5] = { 12, 7, 1, 5, 5 };
+static const int GOLDEN_LABELS[GOLDEN_N_WINDOWS] = { 12, 7, 1, 5, 5 };
 
 #endif /* GOLDEN_VECTORS_H */

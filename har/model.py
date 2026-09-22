@@ -12,24 +12,12 @@ import json
 import os
 
 import joblib
-import numpy as np
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (accuracy_score, classification_report, confusion_matrix,
+from sklearn.metrics import (accuracy_score, classification_report,
                              f1_score, precision_score, recall_score)
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
 
 from . import config as cfg
 
 DEFAULT_DIR = 'models'
-
-
-def build(C=cfg.LOGREG_C):
-    """Chuan hoa Z-score roi phan loai tuyen tinh."""
-    return Pipeline([
-        ('scaler', StandardScaler()),
-        ('clf', LogisticRegression(C=C, max_iter=2000, random_state=cfg.SEED)),
-    ])
 
 
 def metrics(y_true, y_pred):
@@ -53,10 +41,6 @@ def report(y_true, y_pred):
     return classification_report(y_true, y_pred, target_names=names, zero_division=0)
 
 
-def confusion(y_true, y_pred):
-    return confusion_matrix(y_true, y_pred)
-
-
 # ---------------------------------------------------------------------------
 # Luu / nap
 # ---------------------------------------------------------------------------
@@ -76,12 +60,3 @@ def load_bundle(out_dir=DEFAULT_DIR):
     meta_path = os.path.join(out_dir, 'meta.json')
     meta = json.load(open(meta_path)) if os.path.isfile(meta_path) else {}
     return scaler, clf, meta
-
-
-def linear_weights(clf):
-    """-> (W, b) float32. W shape (N_CLASSES, N_FEATURES), b shape (N_CLASSES,).
-
-    Ben C: score[k] = b[k] + sum_j W[k][j] * x_chuan[j], lay argmax.
-    """
-    return (np.ascontiguousarray(clf.coef_, dtype=np.float32),
-            np.ascontiguousarray(clf.intercept_, dtype=np.float32))

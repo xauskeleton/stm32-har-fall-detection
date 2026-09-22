@@ -39,7 +39,6 @@ LABEL_LAYING = 6
 LABELS_ACTIVE = frozenset({1, 2, 3, 4, 5})          # chua nam
 LABELS_UPRIGHT = frozenset({1, 2, 3, 5})            # dung / di bo
 LABELS_LIE_DOWN_TRANSITION = frozenset({9, 11})     # SIT_TO_LIE, STAND_TO_LIE
-LABELS_GET_UP_TRANSITION = frozenset({10, 12})      # LIE_TO_SIT, LIE_TO_STAND
 
 # === Chia train/test theo NGUOI, khong theo mau ===
 TRAIN_USERS = frozenset({1, 3, 5, 6, 7, 8, 11, 14, 15, 16, 17, 19,

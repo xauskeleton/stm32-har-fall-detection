@@ -17,7 +17,7 @@ State machine (file nay va firmware/Core/Src/fall_detect.c la ban sao cua nhau):
     SHOCK ──quay lai dung/di──► IDLE                      (vap nhe, tu dung day)
     FALLEN ──roi khoi LAYING du lau──► IDLE               (da dung day / duoc do day)
 """
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -192,7 +192,3 @@ def run_sequence(labels, acc=None, params=None, win_acc=None, use_median=True):
         if ev:
             events.append((i, i * WINDOW_PERIOD, ev))
     return states, events
-
-
-def params_as_dict(p):
-    return asdict(p)
