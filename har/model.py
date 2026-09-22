@@ -1,42 +1,35 @@
 """
 Huan luyen, danh gia va luu/nap bo model (scaler + classifier).
 
-CHI DUNG ML CO DIEN - khong mang no-ron.
+Model dem xuong MCU: LogisticRegression 120 -> 12 (tuyen tinh).
+  - 12 x 120 + 12 = 1452 tham so = 5.7 KB float32
+  - suy luan 1 cua so = 1440 phep MAC + argmax
+  - mo hinh loi: nghiem duy nhat, khong phu thuoc seed
 
-Model DUOC DEM XUONG MCU la LogisticRegression 120 -> 12 (tuyen tinh):
-  - 12 x 120 + 12 = 1.452 tham so = 5.7 KB float32
-  - suy luan 1 cua so = 1.440 phep MAC + softmax -> vai chuc microsecond tren Cortex-M4F
-  - la mo hinh loi: nghiem duy nhat, khong phu thuoc seed
-
-Cac lua chon da loai:
-  - SVM RBF (repo DSP goc): 2636 support vector x 120 float = ~1.2 MB -> qua flash 512 KB
-  - Random Forest 200 cay  : export ra if/else C cung vai tram KB
-  - MLP / mang no-ron      : ngoai pham vi de tai (chi dung ML co dien); do thuc te cung
-                             thua logreg o moi cau hinh dac trung
+Ly do chon (thang ca SVM RBF 1.2 MB lan Random Forest): docs/DECISIONS.md muc 3.
 """
 import json
 import os
 
 import joblib
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (accuracy_score, classification_report, confusion_matrix,
                              f1_score, precision_score, recall_score)
-from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC
 
 from . import config as cfg
 
+DEFAULT_DIR = 'models'
 
-def build_models(which=('logreg', 'rf', 'svm')):
-    """Cac model doi chieu cho bao cao. Zoo day du nam o scripts/train.py."""
-    zoo = {
-        'logreg': LogisticRegression(C=0.1, max_iter=2000, random_state=cfg.SEED),
-        'rf': RandomForestClassifier(n_estimators=200, random_state=cfg.SEED),
-        'svm': SVC(kernel='rbf', C=10, random_state=cfg.SEED),
-    }
-    return {k: zoo[k] for k in which}
+
+def build(C=cfg.LOGREG_C):
+    """Chuan hoa Z-score roi phan loai tuyen tinh."""
+    return Pipeline([
+        ('scaler', StandardScaler()),
+        ('clf', LogisticRegression(C=C, max_iter=2000, random_state=cfg.SEED)),
+    ])
 
 
 def metrics(y_true, y_pred):
@@ -45,13 +38,14 @@ def metrics(y_true, y_pred):
         'precision': precision_score(y_true, y_pred, average='weighted', zero_division=0),
         'recall': recall_score(y_true, y_pred, average='weighted', zero_division=0),
         'f1': f1_score(y_true, y_pred, average='weighted', zero_division=0),
+        'macro_f1': f1_score(y_true, y_pred, average='macro', zero_division=0),
     }
 
 
 def print_metrics(name, m):
-    print(f'=== {name} ===')
-    for k in ('accuracy', 'precision', 'recall', 'f1'):
-        print(f'  {k.capitalize():<10} {m[k] * 100:6.2f}%')
+    print('=== %s ===' % name)
+    for k in ('accuracy', 'precision', 'recall', 'f1', 'macro_f1'):
+        print('  %-10s %6.2f%%' % (k.replace('_', '-').capitalize(), m[k] * 100))
 
 
 def report(y_true, y_pred):
@@ -66,8 +60,6 @@ def confusion(y_true, y_pred):
 # ---------------------------------------------------------------------------
 # Luu / nap
 # ---------------------------------------------------------------------------
-DEFAULT_DIR = 'models'
-
 
 def save_bundle(out_dir, scaler, clf, meta):
     os.makedirs(out_dir, exist_ok=True)
@@ -75,7 +67,7 @@ def save_bundle(out_dir, scaler, clf, meta):
     joblib.dump(clf, os.path.join(out_dir, 'classifier.pkl'))
     with open(os.path.join(out_dir, 'meta.json'), 'w') as f:
         json.dump(meta, f, indent=2)
-    print(f'Da luu model vao {out_dir}/ (scaler.pkl, classifier.pkl, meta.json)')
+    print('Da luu model vao %s/ (scaler.pkl, classifier.pkl, meta.json)' % out_dir)
 
 
 def load_bundle(out_dir=DEFAULT_DIR):
@@ -87,11 +79,9 @@ def load_bundle(out_dir=DEFAULT_DIR):
 
 
 def linear_weights(clf):
-    """Model tuyen tinh -> (W, b) float32 cho export_c.
+    """-> (W, b) float32. W shape (N_CLASSES, N_FEATURES), b shape (N_CLASSES,).
 
-    W shape (N_CLASSES, n_features), b shape (N_CLASSES,).
-    Ben C: score[k] = b[k] + sum_j W[k][j] * x[j], lay argmax (softmax chi de lay do tin cay).
+    Ben C: score[k] = b[k] + sum_j W[k][j] * x_chuan[j], lay argmax.
     """
-    W = np.ascontiguousarray(clf.coef_, dtype=np.float32)
-    b = np.ascontiguousarray(clf.intercept_, dtype=np.float32)
-    return W, b
+    return (np.ascontiguousarray(clf.coef_, dtype=np.float32),
+            np.ascontiguousarray(clf.intercept_, dtype=np.float32))

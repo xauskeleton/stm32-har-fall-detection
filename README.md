@@ -105,11 +105,16 @@ har/                    thư viện Python dùng chung
   dataset.py            đọc HAPT RawData, Phyphox CSV, log UART, ground truth
   fall.py               state machine té ngã (bản tham chiếu của fall_detect.c)
   model.py              đánh giá, lưu/nạp model, xuất trọng số cho C
+  export_c.py           sinh code C từ model đã huấn luyện
 scripts/
-  train.py              huấn luyện + so sánh cấu hình (--sweep)
-  eval_fall.py          đo báo động sai trên toàn bộ HAPT
-  pseudo_fall.py        thử nén thời gian (đọc kỹ phần giới hạn trong file)
+  train.py              huấn luyện, lưu models/
+  eval_fall.py          đo báo động té ngã sai trên toàn bộ HAPT
+  export_model.py       sinh firmware/.../model_params.*
 models/                 scaler.pkl, classifier.pkl, meta.json, sweep.json
+firmware/               sinh tự động — KHÔNG sửa tay
+  Core/Inc/model_params.h    hằng số, ngưỡng, khai báo
+  Core/Src/model_params.c    hệ số biquad, scaler, ma trận 12×120
+  test/golden_vectors.h      dữ liệu đối chiếu C vs Python
 docs/
   DECISIONS.md          10 mục — số liệu chứng minh từng quyết định kỹ thuật
   TODO.md               việc còn lại và câu hỏi còn treo
@@ -138,24 +143,22 @@ python scripts/train.py --data /đường/dẫn/tới/RawData
 ## Lệnh hay dùng
 
 ```bash
-# Huấn luyện lại cấu hình đã chốt
+# Huấn luyện lại
 python scripts/train.py
-
-# Bảng so sánh: 5 bộ đặc trưng × 8 model ML cổ điển
-python scripts/train.py --sweep
-
-# Biến thể 80 đặc trưng, không cần bộ lọc nào
-python scripts/train.py --groups min
-
-# Đổi model (logreg / linsvc / lda / ridge / gnb / tree / rf50 / svm_rbf)
-python scripts/train.py --model linsvc
 
 # Đo báo động té ngã sai trên toàn bộ HAPT
 python scripts/eval_fall.py
 
-# Lần đầu nên thêm --cache để lần sau đọc nhanh hơn nhiều
-python scripts/train.py --sweep --cache hapt_raw.npz
+# Sinh code C cho firmware
+python scripts/export_model.py
+
+# Thêm --cache để lần sau đọc dữ liệu nhanh hơn nhiều (60 s -> 1 s)
+python scripts/train.py --cache hapt_raw.npz
 ```
+
+Các script so sánh cấu hình (5 bộ đặc trưng × 8 model, thử nén thời gian) đã được gỡ bỏ
+sau khi chốt xong — số liệu còn nguyên trong `docs/DECISIONS.md` và `models/sweep.json`,
+code nằm ở commit `8174182` nếu cần chạy lại.
 
 ## Các quyết định kỹ thuật chính
 
@@ -175,4 +178,7 @@ Mỗi quyết định đều có số liệu chứng minh trong `docs/DECISIONS.
 
 ## Trạng thái
 
-Phần Python đã xong và đo đạc đầy đủ. Phần firmware C chưa bắt đầu — xem `docs/TODO.md`.
+Phần Python xong và đã đo đạc đầy đủ. Tham số model đã xuất sang C và biên dịch được.
+
+Còn thiếu phần thuật toán C (lọc median, biquad, FFT, 120 đặc trưng, nhân ma trận,
+state machine) và phần đọc cảm biến — xem `docs/TODO.md`.

@@ -1,8 +1,10 @@
 # Quyết định kỹ thuật — số liệu chứng minh
 
-Cập nhật: 2026-09-21. Mọi bảng dưới đây sinh từ `python scripts/train.py --sweep`
-(dữ liệu thô: `models/sweep.json`). Test set = 9 subject chưa từng xuất hiện trong train,
-3.162 cửa sổ. Seed 42.
+Test set = 9 người chưa từng xuất hiện trong tập train, 3.162 cửa sổ. Seed 42.
+
+Số liệu thô của các bảng so sánh nằm ở `models/sweep.json`. Code sinh ra chúng
+(sweep 5 bộ đặc trưng × 8 model, và thử nghiệm nén thời gian ở mục 9) đã được gỡ khỏi
+repo sau khi chốt xong cấu hình — xem commit `8174182` nếu cần chạy lại.
 
 ---
 
@@ -63,8 +65,8 @@ Lưu ý trung thực: `STAND_TO_LIE` **không** hưởng lợi (−0.01), dù đ
 
 **→ Giữ. Chi phí firmware: 1 cascade biquad bậc 3 (2 section) trên 3 trục acc, ~30 MAC/mẫu.**
 
-Nếu sau này cần cắt tối đa: `python scripts/train.py --groups min` cho ra cấu hình 80 đặc trưng
-không filter, mất ~0.9%.
+Nếu sau này cần cắt tối đa: bỏ `body_acc` khỏi `cfg.GROUPS` cho ra cấu hình 80 đặc trưng
+không cần bộ lọc nào, mất ~0.9%.
 
 ---
 
@@ -287,7 +289,7 @@ phân loại** (đặc trưng vẫn tính trên tín hiệu thô, như mục 1�
 
 ## 9. Giới hạn của thử nghiệm pseudo-fall
 
-`scripts/pseudo_fall.py` nén thời gian các đoạn `*_TO_LIE` thật để mô phỏng chuyển tư thế
+Thử nghiệm nén thời gian các đoạn `*_TO_LIE` thật để mô phỏng chuyển tư thế
 nhanh như té ngã. Kết quả: ở 0,76 s, bộ phân loại **vẫn** gán nhãn `*_TO_LIE` trong 97,5%
 trường hợp, tỷ lệ báo động 0,8%.
 
@@ -311,8 +313,7 @@ chậm. Điều đó vốn đã biết và chính là lý do có nhánh sốc.
 
 **Điều nó KHÔNG chứng minh:** tỷ lệ bỏ sót té ngã thật. Vẫn phải đo bằng mẫu thật.
 
-Script in thêm cột `a_max max` và in rõ giới hạn này ngay trong kết quả, để không ai
-dùng nhầm bảng số này làm tỷ lệ phát hiện té ngã.
+Ghi lại ở đây để không ai dùng nhầm bảng số này làm tỷ lệ phát hiện té ngã.
 
 ---
 
