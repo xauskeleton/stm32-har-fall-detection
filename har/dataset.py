@@ -80,28 +80,39 @@ def build_features(raw, labels, verbose=True):
 
     Tra ve (X_train, y_train, X_test, y_test) voi X shape (n, 120).
     """
-    buckets = {'train': [], 'test': []}
-    y = {'train': [], 'test': []}
+    X_train, y_train = [], []
+    X_test, y_test = [], []
 
+    # labels.txt: moi dong la 1 doan co nhan. start/end dem tu 1 nen phai tru 1.
     for exp_id, user_id, act_id, start, end in labels:
         rec = raw.get((exp_id, user_id))
         if rec is None:
             continue
-        a, b, g = dsp.preprocess(rec['acc'], rec['gyro'])
-        wa = dsp.make_windows(a[start - 1:end])
-        if wa is None:
-            continue                       # doan ngan hon 1 cua so -> bo
-        split = 'train' if user_id in cfg.TRAIN_USERS else 'test'
-        buckets[split].append(dsp.extract_features(
-            wa, dsp.make_windows(b[start - 1:end]), dsp.make_windows(g[start - 1:end])))
-        y[split].append(np.full(len(wa), act_id, dtype=int))
 
-    out = []
-    for split in ('train', 'test'):
-        out += [np.concatenate(buckets[split]), np.concatenate(y[split])]
+        acc, bacc, gyro = dsp.preprocess(rec['acc'], rec['gyro'])
+        w_acc = dsp.make_windows(acc[start - 1:end])
+        if w_acc is None:
+            continue                       # doan ngan hon 1 cua so -> bo qua
+        w_bacc = dsp.make_windows(bacc[start - 1:end])
+        w_gyro = dsp.make_windows(gyro[start - 1:end])
+
+        X = dsp.extract_features(w_acc, w_bacc, w_gyro)
+        y = np.full(len(w_acc), act_id, dtype=int)
+
+        if user_id in cfg.TRAIN_USERS:
+            X_train.append(X)
+            y_train.append(y)
+        else:
+            X_test.append(X)
+            y_test.append(y)
+
+    X_train = np.concatenate(X_train)
+    y_train = np.concatenate(y_train)
+    X_test = np.concatenate(X_test)
+    y_test = np.concatenate(y_test)
     if verbose:
-        print('Train: %d cua so | Test: %d cua so' % (len(out[1]), len(out[3])))
-    return out[0], out[1], out[2], out[3]
+        print('Train: %d cua so | Test: %d cua so' % (len(y_train), len(y_test)))
+    return X_train, y_train, X_test, y_test
 
 
 # ---------------------------------------------------------------------------

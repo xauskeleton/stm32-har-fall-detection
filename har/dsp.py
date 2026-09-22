@@ -23,20 +23,26 @@ SOS_GRAV = butter(cfg.FILTER_ORDER, cfg.FC_GRAV / (cfg.FS / 2), 'low', output='s
 
 
 def median3(sig):
-    """Loc median cua so 3 doc theo truc 0, giu nguyen do dai (2 bien copy nguyen).
+    """Loc median cua so 3: moi mau doi thanh gia tri GIUA cua 3 mau lien tiep.
 
-    CHI dung cho kenh phat hien soc gia toc, KHONG dung cho dac trung phan loai.
-    Xoa gai nhieu don le: gia toc ke cua HAPT co gai 1.49g trong 1 mau ngay khi
-    nam yen, lam 12.9% cua so tu the tinh bi coi la te nga. Median 3 dua ve 0.0%.
+    Vi du: [1.0, 9.0, 1.0] -> mau giua doi tu 9.0 thanh 1.0, vi sap xep 3 so
+    (1.0, 9.0, 1.0) duoc (1.0, 1.0, 9.0), lay so o giua = 1.0.
+    Hai mau o hai dau giu nguyen (khong du 3 mau de lay median).
 
-    Viet don gian de port sang C khong sai lech: moi mau giua = gia tri o giua
-    sau khi sap xep 3 mau lien tiep.
+    Tac dung: xoa gai nhieu chi keo dai 1 mau. Gia toc ke cua HAPT co gai 1.49g
+    trong 1 mau ngay khi nguoi dang nam yen, lam 12.9% cua so tu the tinh bi coi
+    la te nga. Median 3 dua ve 0.0%. Xem docs/DECISIONS.md muc 8.
+
+    CHI dung cho kenh phat hien soc, KHONG dung cho dac trung phan loai.
     """
     s = np.asarray(sig, dtype=np.float64)
     if len(s) < 3:
         return s.copy()
+    prev = s[:-2]        # mau truoc
+    cur = s[1:-1]        # mau hien tai
+    nxt = s[2:]          # mau sau
     out = s.copy()
-    out[1:-1] = np.median(np.stack([s[:-2], s[1:-1], s[2:]]), axis=0)
+    out[1:-1] = np.median(np.stack([prev, cur, nxt]), axis=0)
     return out
 
 
@@ -53,13 +59,21 @@ def preprocess(acc, gyro):
 
 
 def make_windows(sig):
-    """(N, C) -> (n_win, WINDOW, C), overlap 50%. None neu qua ngan."""
+    """Cat tin hieu thanh cac cua so 128 mau, moi lan truot 64 mau (overlap 50%).
+
+    (N, C) -> (so_cua_so, 128, C). Tra ve None neu tin hieu ngan hon 1 cua so.
+
+    Cua so 0 la mau 0..127, cua so 1 la mau 64..191, cua so 2 la mau 128..255...
+    """
     sig = np.asarray(sig)
     n_win = (len(sig) - cfg.WINDOW) // cfg.STEP + 1
     if n_win < 1:
         return None
-    idx = np.arange(n_win)[:, None] * cfg.STEP + np.arange(cfg.WINDOW)
-    return sig[idx]
+    windows = []
+    for i in range(n_win):
+        start = i * cfg.STEP
+        windows.append(sig[start:start + cfg.WINDOW])
+    return np.stack(windows)
 
 
 # ---------------------------------------------------------------------------

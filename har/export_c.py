@@ -173,9 +173,10 @@ def export(scaler, clf, meta, out_dir='firmware', golden=None, params=None):
     W = np.ascontiguousarray(clf.coef_, dtype=np.float32)
     b = np.ascontiguousarray(clf.intercept_, dtype=np.float32)
 
-    inc, src, tst = (os.path.join(out_dir, *x) for x in
-                     (('Core', 'Inc'), ('Core', 'Src'), ('test',)))
-    for d in (inc, src, tst):
+    dir_inc = os.path.join(out_dir, 'Core', 'Inc')
+    dir_src = os.path.join(out_dir, 'Core', 'Src')
+    dir_test = os.path.join(out_dir, 'test')
+    for d in (dir_inc, dir_src, dir_test):
         os.makedirs(d, exist_ok=True)
 
     header = _HEADER.format(
@@ -202,8 +203,8 @@ def export(scaler, clf, meta, out_dir='firmware', golden=None, params=None):
                         for i in range(1, cfg.N_CLASSES + 1)))
 
     written = []
-    for path, text in ((os.path.join(inc, 'model_params.h'), header),
-                       (os.path.join(src, 'model_params.c'), source)):
+    for path, text in ((os.path.join(dir_inc, 'model_params.h'), header),
+                       (os.path.join(dir_src, 'model_params.c'), source)):
         with open(path, 'w', newline='\n') as f:
             f.write(text)
         written.append(path)
@@ -212,7 +213,7 @@ def export(scaler, clf, meta, out_dir='firmware', golden=None, params=None):
         acc, gyro = golden
         X = dsp.pipeline(acc, gyro)
         pred = clf.predict(scaler.transform(X))
-        path = os.path.join(tst, 'golden_vectors.h')
+        path = os.path.join(dir_test, 'golden_vectors.h')
         with open(path, 'w', newline='\n') as f:
             f.write(_GOLDEN.format(
                 n=len(acc), nw=len(X),

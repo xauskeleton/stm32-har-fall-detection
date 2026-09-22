@@ -69,8 +69,11 @@ def main():
     except FileNotFoundError as e:
         raise SystemExit('\n  %s\n' % e)
     raw, labels = dataset.load_raw(raw_dir, cache=args.cache)
-    results = [r for r in (run_experiment(raw[k], labels, k, scaler, clf, params)
-                           for k in sorted(raw)) if r]
+    results = []
+    for key in sorted(raw):
+        r = run_experiment(raw[key], labels, key, scaler, clf, params)
+        if r is not None:
+            results.append(r)
 
     total_s = sum(r['seconds'] for r in results)
     print('\n' + '=' * 70)

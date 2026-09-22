@@ -175,15 +175,17 @@ def run_sequence(labels, acc=None, params=None, win_acc=None, use_median=True):
 
     Tra ve (states, events) voi events la list (index_cua_so, thoi_diem_s, ten_su_kien).
     """
-    det = FallDetector(params)
+    a_min = a_max = None
     if acc is not None:
         a_min, a_max = shock_windows(acc, use_median=use_median)
     elif win_acc is not None:
         a_min, a_max = window_shock_stats(win_acc)
-    else:
-        a_min = a_max = [None] * len(labels)
+
     if a_min is None:
+        # Khong co thong tin gia toc -> chi chay theo chuoi nhan
         a_min = a_max = [None] * len(labels)
+
+    det = FallDetector(params)
 
     states, events = [], []
     for i, lab in enumerate(labels):
