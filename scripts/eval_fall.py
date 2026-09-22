@@ -64,7 +64,11 @@ def main():
     clf = joblib.load(os.path.join(args.models, 'classifier.pkl'))
     params = fall.FallParams(shock_rule=args.rule) if args.rule else fall.FallParams()
 
-    raw, labels = dataset.load_raw(dataset.find_rawdata(args.data), cache=args.cache)
+    try:
+        raw_dir = dataset.find_rawdata(args.data)
+    except FileNotFoundError as e:
+        raise SystemExit('\n  %s\n' % e)
+    raw, labels = dataset.load_raw(raw_dir, cache=args.cache)
     results = [r for r in (run_experiment(raw[k], labels, k, scaler, clf, params)
                            for k in sorted(raw)) if r]
 

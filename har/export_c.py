@@ -184,11 +184,16 @@ const char *har_label_name(int label)
     )
 
 
-def _golden(acc, gyro, X, labels, n_sample):
+def _golden(acc, gyro, X, labels, n_sample, synthetic=False):
     """Du lieu doi chieu: tin hieu tho vao -> dac trung + nhan mong doi."""
     n_win = len(X)
+    warn = ('''
+ * CANH BAO: du lieu nay sinh tu TIN HIEU TONG HOP (song sin), khong phai do that.
+ * Test van dung duoc (tu nhat quan) nhung yeu hon: song sin khong phu het dai gia
+ * tri cua du lieu that. Nen sinh lai khi co HAPT RawData hoac file do tay.
+ *''' if synthetic else '')
     return '''/* SINH TU DONG boi scripts/export_model.py - KHONG SUA TAY.
- *
+ *%s
  * Doi chieu C voi Python. Nap GOLDEN_ACC/GOLDEN_GYRO vao duong ong streaming,
  * so ket qua voi GOLDEN_FEATURES va GOLDEN_LABELS.
  *
@@ -215,7 +220,7 @@ static const int GOLDEN_LABELS[%d] = { %s };
 
 #endif /* GOLDEN_VECTORS_H */
 ''' % (
-        n_sample, n_win,
+        warn, n_sample, n_win,
         _arr2('GOLDEN_ACC', acc.astype(np.float32), per_line=3),
         _arr2('GOLDEN_GYRO', gyro.astype(np.float32), per_line=3),
         _arr2('GOLDEN_FEATURES', X.astype(np.float32), per_line=5),
@@ -223,8 +228,13 @@ static const int GOLDEN_LABELS[%d] = { %s };
     )
 
 
-def export(scaler, clf, meta, out_dir='firmware', golden=None, params=None):
-    """Sinh toan bo file C. golden = (acc, gyro) tin hieu tho de tao vector doi chieu."""
+def export(scaler, clf, meta, out_dir='firmware', golden=None, params=None,
+           golden_synthetic=False):
+    """Sinh toan bo file C.
+
+    golden = (acc, gyro) tin hieu tho de tao vector doi chieu. None -> khong ghi
+    golden_vectors.h (giu nguyen file da co).
+    """
     params = params or fall.FallParams()
     W = np.ascontiguousarray(clf.coef_, dtype=np.float32)
     b = np.ascontiguousarray(clf.intercept_, dtype=np.float32)

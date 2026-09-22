@@ -26,7 +26,11 @@ def main():
     ap.add_argument('-C', type=float, default=cfg.LOGREG_C)
     args = ap.parse_args()
 
-    raw, labels = dataset.load_raw(dataset.find_rawdata(args.data), cache=args.cache)
+    try:
+        raw_dir = dataset.find_rawdata(args.data)
+    except FileNotFoundError as e:
+        raise SystemExit('\n  %s\n' % e)
+    raw, labels = dataset.load_raw(raw_dir, cache=args.cache)
     X_tr, y_tr, X_te, y_te = dataset.build_features(raw, labels)
 
     scaler = StandardScaler().fit(X_tr)
