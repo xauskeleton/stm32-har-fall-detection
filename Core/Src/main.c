@@ -51,6 +51,7 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 volatile uint8_t flag_sample_imu = 0;
+volatile uint32_t missed_sample_count = 0;
 
 ICM20948_int16_vector3 accel_data;
 ICM20948_int16_vector3 gyro_data;

@@ -200,11 +200,15 @@ void SysTick_Handler(void)
 
 /* USER CODE BEGIN 1 */
 extern volatile uint8_t flag_sample_imu;
+extern volatile uint32_t missed_sample_count;
 
 void TIM6_DAC_IRQHandler(void)
 {
   if (TIM6->SR & TIM_SR_UIF) {
     TIM6->SR = ~TIM_SR_UIF;
+    if (flag_sample_imu == 1) {
+        missed_sample_count++;
+    }
     flag_sample_imu = 1;
     
     // Heartbeat led (chớp nháy PC5) mỗi 0.5s để biết Timer đang chạy

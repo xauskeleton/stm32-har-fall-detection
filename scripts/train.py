@@ -53,7 +53,7 @@ def build_zoo(seed=cfg.SEED):
     Ba model cuoi nang hon, de doi chieu.
     """
     return [
-        ('logreg', lambda: LogisticRegression(C=0.1, max_iter=2000, random_state=seed)),
+        ('logreg', lambda: LogisticRegression(C=0.1, max_iter=2000, random_state=seed, multi_class='multinomial', solver='lbfgs')),
         ('linsvc', lambda: LinearSVC(C=0.1, max_iter=5000, random_state=seed)),
         ('lda', lambda: LinearDiscriminantAnalysis()),
         ('ridge', lambda: RidgeClassifier(random_state=seed)),
@@ -86,19 +86,19 @@ def sweep(raw, labels, out_json=None):
     for name, groups, use_fft, use_butter, mode in FEATURE_CONFIGS:
         n_feat = cfg.n_features(groups, use_fft)
         t0 = time.time()
-        X_tr, y_tr, X_te, y_te = dataset.build_features(
+        X_tr, y_tr, u_tr, X_val, y_val, u_val, X_te, y_te, u_te = dataset.build_features(
             raw, labels, mode=mode, use_butter=use_butter,
             groups=groups, use_fft=use_fft)
         scaler = StandardScaler().fit(X_tr)
-        Xs_tr, Xs_te = scaler.transform(X_tr), scaler.transform(X_te)
-        print('[%s] %d features | %d train / %d test | trich xuat %.1fs'
-              % (name, n_feat, X_tr.shape[0], X_te.shape[0], time.time() - t0))
+        Xs_tr, Xs_val = scaler.transform(X_tr), scaler.transform(X_val)
+        print('[%s] %d features | %d train / %d val | trich xuat %.1fs'
+              % (name, n_feat, X_tr.shape[0], X_val.shape[0], time.time() - t0))
 
         for mname, make in zoo:
             t1 = time.time()
             clf = make()
             clf.fit(Xs_tr, y_tr)
-            m = har_model.metrics(y_te, clf.predict(Xs_te))
+            m = har_model.metrics(y_val, clf.predict(Xs_val))
             row = {
                 'config': name, 'groups': list(groups), 'fft': use_fft,
                 'butter': use_butter, 'mode': mode, 'n_feat': n_feat,
@@ -156,7 +156,7 @@ def print_table(rows):
 
 def train_final(raw, labels, groups, use_fft, mode, kind, C, out_dir):
     n_feat = cfg.n_features(groups, use_fft)
-    X_tr, y_tr, X_te, y_te = dataset.build_features(
+    X_tr, y_tr, u_tr, X_val, y_val, u_val, X_te, y_te, u_te = dataset.build_features(
         raw, labels, mode=mode, use_butter=False, groups=groups, use_fft=use_fft)
     scaler = StandardScaler().fit(X_tr)
 
@@ -169,10 +169,11 @@ def train_final(raw, labels, groups, use_fft, mode, kind, C, out_dir):
     arch = '%s %d-%d' % (kind, n_feat, cfg.N_CLASSES)
     clf.fit(scaler.transform(X_tr), y_tr)
 
-    pred = clf.predict(scaler.transform(X_te))
-    m = har_model.metrics(y_te, pred)
+    pred = clf.predict(scaler.transform(X_val))
+    m = har_model.metrics(y_val, pred)
+    print("\n--- VALIDATION METRICS ---")
     har_model.print_metrics(arch, m)
-    print(har_model.report(y_te, pred))
+    print(har_model.report(y_val, pred))
 
     n_par = int(count_params(clf))
     meta = {

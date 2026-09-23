@@ -85,38 +85,55 @@ def build_windows(raw, labels, mode='causal', use_butter=cfg.USE_BUTTER,
                               use_butter=use_butter, groups=groups)
             for k, v in raw.items()}
 
-    buckets = {'train': {g: [] for g in groups}, 'test': {g: [] for g in groups}}
-    y = {'train': [], 'test': []}
+    buckets = {'train': {g: [] for g in groups}, 'val': {g: [] for g in groups}, 'test': {g: [] for g in groups}}
+    y = {'train': [], 'val': [], 'test': []}
+    u = {'train': [], 'val': [], 'test': []}
 
     for exp_id, user_id, act_id, start, end in labels:
         rec = sigs.get((exp_id, user_id))
         if rec is None:
             continue
-        split = 'train' if user_id in cfg.TRAIN_USERS else 'test'
+        if user_id in cfg.TRAIN_USERS:
+            split = 'train'
+        elif user_id in getattr(cfg, 'VAL_USERS', frozenset()):
+            split = 'val'
+        else:
+            split = 'test'
+            
         wins = {g: dsp.make_windows(rec[g][start - 1:end]) for g in groups}
         if wins[groups[0]] is None:
             continue                       # doan ngan hon 1 cua so -> bo
         for g in groups:
             buckets[split][g].append(wins[g])
-        y[split].append(np.full(len(wins[groups[0]]), act_id, dtype=int))
+        num_wins = len(wins[groups[0]])
+        y[split].append(np.full(num_wins, act_id, dtype=int))
+        u[split].append(np.full(num_wins, user_id, dtype=int))
 
     result = {}
-    for split in ('train', 'test'):
-        result[split] = {g: np.concatenate(v) for g, v in buckets[split].items()}
-        result[f'y_{split}'] = np.concatenate(y[split])
+    for split in ('train', 'val', 'test'):
+        if buckets[split][groups[0]]:
+            result[split] = {g: np.concatenate(v) for g, v in buckets[split].items()}
+            result[f'y_{split}'] = np.concatenate(y[split])
+            result[f'u_{split}'] = np.concatenate(u[split])
+        else:
+            result[split] = {g: np.array([]) for g in groups}
+            result[f'y_{split}'] = np.array([])
+            result[f'u_{split}'] = np.array([])
+            
     if verbose:
-        print(f"Train: {len(result['y_train'])} cua so | Test: {len(result['y_test'])} cua so")
+        print(f"Train: {len(result['y_train'])} cua so | Val: {len(result['y_val'])} cua so | Test: {len(result['y_test'])} cua so")
     return result
 
 
 def build_features(raw, labels, mode='causal', use_butter=cfg.USE_BUTTER,
                    groups=cfg.GROUPS_FULL, use_fft=True, verbose=False):
-    """Tat ca trong mot buoc -> (X_train, y_train, X_test, y_test)."""
+    """Tat ca trong mot buoc -> (X_train, y_train, u_tr, X_val, y_val, u_val, X_test, y_test, u_te)."""
     w = build_windows(raw, labels, mode=mode, use_butter=use_butter,
                       groups=groups, verbose=verbose)
-    X_tr = dsp.extract_features(w['train'], groups=groups, use_fft=use_fft)
-    X_te = dsp.extract_features(w['test'], groups=groups, use_fft=use_fft)
-    return X_tr, w['y_train'], X_te, w['y_test']
+    X_tr = dsp.extract_features(w['train'], groups=groups, use_fft=use_fft) if len(w['y_train']) > 0 else np.array([])
+    X_val = dsp.extract_features(w['val'], groups=groups, use_fft=use_fft) if len(w['y_val']) > 0 else np.array([])
+    X_te = dsp.extract_features(w['test'], groups=groups, use_fft=use_fft) if len(w['y_test']) > 0 else np.array([])
+    return X_tr, w['y_train'], w['u_train'], X_val, w['y_val'], w['u_val'], X_te, w['y_test'], w['u_test']
 
 
 # ---------------------------------------------------------------------------

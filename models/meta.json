@@ -18,9 +18,9 @@
   "window": 128,
   "step": 64,
   "metrics": {
-    "accuracy": 86.88,
-    "precision": 87.0,
-    "recall": 86.88,
-    "f1": 86.85
+    "accuracy": 94.09,
+    "precision": 94.45,
+    "recall": 94.09,
+    "f1": 94.07
   }
 }

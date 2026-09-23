@@ -16,8 +16,8 @@ def main():
     coef = clf.coef_.astype(np.float32)       # shape (12, 120)
     intercept = clf.intercept_.astype(np.float32) # shape (12,)
 
-    inc_dir = os.path.join(os.path.dirname(base_dir), 'Core', 'Inc')
-    src_dir = os.path.join(os.path.dirname(base_dir), 'Core', 'Src')
+    inc_dir = os.path.join(base_dir, 'Core', 'Inc')
+    src_dir = os.path.join(base_dir, 'Core', 'Src')
 
     h_path = os.path.join(inc_dir, 'model_params.h')
     c_path = os.path.join(src_dir, 'model_params.c')
