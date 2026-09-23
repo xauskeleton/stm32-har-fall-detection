@@ -1,0 +1,9 @@
+../Core/Src/fall_detect.c:33:13:reset_soft	4	static
+../Core/Src/fall_detect.c:40:6:Fall_Init	16	static
+../Core/Src/fall_detect.c:50:13:is_shock	24	static
+../Core/Src/fall_detect.c:56:13:is_active_upright	16	static
+../Core/Src/fall_detect.c:62:13:is_upright	16	static
+../Core/Src/fall_detect.c:67:13:is_abrupt_laying	16	static
+../Core/Src/fall_detect.c:71:13:Fall_Update	32	static
+../Core/Src/fall_detect.c:132:13:Fall_GetState	4	static
+../Core/Src/fall_detect.c:136:13:Fall_GetStateName	4	static
