@@ -180,6 +180,17 @@ model chưa từng thấy khi train.
 
 Ngân sách tài nguyên còn rất rộng so với nhu cầu:
 
+Số liệu **đo thật** từ linker map của firmware đã build (xem `docs/HARDWARE.md`):
+
+| | dùng | có | ghi chú |
+|---|---|---|---|
+| flash tổng | **161,7 KB** | 512 KB | 31,6% |
+| — riêng model | 6,8 KB | | |
+| — riêng bảng tra FFT của CMSIS-DSP | **117,0 KB** | | gấp 17 lần model |
+| RAM tổng | **~15,2 KB** | 128 KB | 11,9% |
+
+Ước lượng ban đầu (trước khi có firmware thật):
+
 | | cần | có |
 |---|---|---|
 | flash (model) | 5.7 KB | 512 KB |

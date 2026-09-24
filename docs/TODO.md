@@ -52,7 +52,8 @@ float64, 0/3.530 cửa sổ khác nhãn. Không cần quantize int8.
 - [ ] Chốt toolchain (khuyến nghị STM32CubeIDE — một bộ cài, có sẵn trình biên dịch + nạp)
 - [ ] Chốt bus cảm biến: I2C hay SPI
 - [ ] `icm20948.c` — driver, tách lớp `read_reg`/`write_reg` để đổi I2C↔SPI chỉ sửa 2 hàm.
-      Cấu hình ±4g / ±500 dps, output 50 Hz.
+      Cấu hình **±4 g / ±1000 °/s**, output 50 Hz. (±500 °/s cắt ngọn: dữ liệu HAPT
+      lên tới 629 °/s. Xem `docs/HARDWARE.md`.)
       **Đổi đơn vị sang g và rad/s cho khớp HAPT.**
 - [ ] `board.c` — timer ngắt 50 Hz, UART, LED
 - [ ] `main.c` — vòng lặp chính

@@ -1,0 +1,173 @@
+# Phần cứng thực tế
+
+Mọi số liệu dưới đây **đọc ra từ project firmware đã build thật**, không phải ước lượng:
+cấu hình CubeMX (`test.ioc`), code khởi tạo (`Core/Src/main.c`, `icm20948.c`), và
+linker map của một lần build (`Debug/test.map`). Nguồn ghi rõ ở từng mục.
+
+Firmware nằm ở branch `Embeded_System` (do Quang dựng bằng STM32CubeIDE).
+
+## Vi điều khiển
+
+| | Giá trị | Nguồn |
+|---|---|---|
+| Chip | **STM32F446RET6** | `test.ioc: Mcu.CPN` |
+| Lõi | Cortex-M4F, FPU single-precision | — |
+| SYSCLK = HCLK | **180 MHz** (tối đa của F446) | `test.ioc: SYSCLKFreq_VALUE` |
+| Nguồn clock | HSE 8 MHz → PLL (M=4, N=180) | `test.ioc: HSE_VALUE, PLLM, PLLN` |
+| APB1 | 45 MHz (HCLK/4), timer 90 MHz | `test.ioc: APB1CLKDivider` |
+| APB2 | 90 MHz (HCLK/2) | `test.ioc: APB2CLKDivider` |
+| Flash | 512 KB @ `0x08000000` | `Debug/test.map` |
+| SRAM | 128 KB @ `0x20000000` | `Debug/test.map` |
+
+## Cảm biến ICM-20948
+
+| | Giá trị | Nguồn |
+|---|---|---|
+| Giao tiếp | **I2C1, 400 kHz** (Fast Mode) | `main.c: hi2c1.Init.ClockSpeed` |
+| Địa chỉ | `0xD0` (dạng 8-bit) = **0x68** 7-bit, chân AD0/SDO nối thấp | `icm20948.h: ICM20948_ADDR_L` |
+| Thang gia tốc | **±4 g** → chia `8192` ra đơn vị g | `main.c:123 ACCEL_FS_SEL_4g` |
+| Thang con quay | **±1000 °/s** → chia `32.768` rồi × π/180 ra rad/s | `main.c:124 GYRO_FS_SEL_1000` |
+| Từ kế AK09916 | **không dùng** (HAPT không có từ kế) | — |
+| Chuyển bank thanh ghi | đã xử lý (`ICM20948_ChangeUserBank`) | `icm20948.c:68` |
+
+Hai thang đo này **đúng** — đã kiểm chứng trên dữ liệu HAPT: ±4 g và ±1000 °/s cho
+**0 mẫu bị cắt ngọn**, trong khi ±2 g cắt 0,16% và ±500 °/s cắt 0,0026% (dữ liệu HAPT
+lên tới 3,08 g và 629 °/s).
+
+> **Cần kiểm tra:** `main.c` ghi kèm bit `ACCEL_FCHOICE` / `GYRO_FCHOICE`, tức bật bộ
+> lọc thông thấp trên chip (DLPF), còn các bit `DLPFCFG` để mặc định 0. Cần đối chiếu
+> datasheet xem băng thông thực tế là bao nhiêu — nếu nó lọc đáng kể thì tín hiệu trên
+> board sẽ mượt hơn dữ liệu HAPT dùng để train.
+
+## Lấy mẫu
+
+| | Giá trị | Nguồn |
+|---|---|---|
+| Tần số | **50 Hz chính xác** | `main.c:383` TIM6 |
+| Cách tạo | TIM6: 90 MHz / 9000 / 200 = 50,000 Hz | `PSC = 8999, ARR = 199` |
+
+Khớp đúng `fs = 50 Hz` của HAPT, không có sai số tần số.
+
+## Ngoại vi khác
+
+| | Giá trị | Nguồn |
+|---|---|---|
+| UART | USART1, chế độ async (in nhãn + trạng thái) | `test.ioc: USART1.VirtualMode` |
+| LED trạng thái | **PC1, PC2, PC3** | `main.c:201-207` |
+| Chân ra khác | PC4, PC5 | `test.ioc` |
+| Chân vào | PC9, PC10, PC11, PC12 | `test.ioc` |
+
+Ba LED báo ba trạng thái của state machine: `IDLE` → `SHOCK` → `FALLEN`.
+
+## Bộ nhớ thực tế đã dùng
+
+Từ `Debug/test.map` — số liệu của một lần build thật, không phải ước lượng.
+
+| Vùng | Dùng | Có | Tỷ lệ |
+|---|---|---|---|
+| **Flash** | **161,7 KB** | 512 KB | **31,6%** |
+| **RAM** | **~15,2 KB** | 128 KB | **11,9%** |
+
+Chi tiết flash: `.text` 36,9 KB + `.rodata` 124,6 KB + `.data` 160 B
+Chi tiết RAM: `.bss` 13,5 KB + `.data` 160 B + heap 512 B + stack 1 KB
+
+### Thứ gì chiếm flash — kết quả bất ngờ
+
+| File | Flash | Ghi chú |
+|---|---|---|
+| `arm_common_tables.o` | **117,0 KB** | **bảng tra FFT của CMSIS-DSP** |
+| `model_params.o` | 6,8 KB | toàn bộ model: scaler + ma trận 12×120 + bias |
+| `arm_cfft_f32.o` | 4,4 KB | |
+| `stm32f4xx_hal_i2c.o` | 4,1 KB | |
+| `arm_cfft_radix8_f32.o` | 4,0 KB | |
+| `icm20948.o` | 2,8 KB | |
+| `main.o` | 2,1 KB | |
+
+**Bảng tra FFT tốn 117 KB — gấp 17 lần bản thân model (6,8 KB).** CMSIS-DSP nhúng bảng
+twiddle cho **mọi** kích thước FFT, dù ta chỉ cần 128 điểm.
+
+Hiện vẫn vừa thoải mái (31,6% flash) nên không phải vấn đề. Nhưng nếu sau này cần chỗ,
+đây là nơi cắt được nhiều nhất — hoặc giới hạn bảng CMSIS về đúng kích thước 128, hoặc
+tự viết FFT radix-2 128 điểm (khoảng 60 dòng).
+
+Cũng đáng lưu ý: **model nhỏ tới mức không còn là yếu tố nào trong bài toán bộ nhớ.**
+Quyết định chọn LogisticRegression thay vì SVM (1,2 MB) vẫn đúng, nhưng lý do "để vừa
+flash" giờ nên nói lại cho chính xác: SVM không vừa, còn giữa các model nhỏ thì flash
+không phải tiêu chí phân biệt.
+
+> **Lỗi trong template CubeIDE:** `STM32F446RETX_FLASH.ld` ghi
+> `_Min_Heap_Size = 0x200; /* required amount of heap (4KB) */` và
+> `_Min_Stack_Size = 0x400; /* required amount of stack (16KB) */`.
+> Hai chú thích đều **sai**: 0x200 = 512 byte, 0x400 = 1 KB. Đây là chú thích sẵn của
+> template ST, không phải lỗi của ai. Stack 1 KB hiện đủ vì mọi buffer lớn trong
+> `har_dsp.c` đều khai báo `static` (nằm ở `.bss`), không nằm trên stack.
+
+## Hướng đặt cảm biến — CHƯA khớp
+
+Đọc từ log UART thật của board, lúc người đứng yên:
+
+```
+Hanh dong: STANDING | Accel: X=-1.00, Y=-0.02, Z=0.02
+Hanh dong: STANDING | Accel: X=-1.00, Y=0.00, Z=0.01
+```
+
+Trọng lực nằm trên **−X**. Nhưng HAPT (dữ liệu dùng để train) có trọng lực trên **+X**
+khi đứng: trung bình toàn dataset là x = +0,819, y = −0,008, z = +0,082.
+
+Và khi nằm, board cho trọng lực trên **+Z**, còn HAPT có trọng lực trong mặt phẳng y–z
+(y = +0,638, z = +0,541).
+
+Thử cả 24 phép hoán vị trục vuông góc, có **3 phép** cho đúng cả `STANDING` lẫn `LAYING`,
+nhưng chỉ **một** phép khớp HAPT vì lý do đúng:
+
+```c
+/* Hoan vi (-x, +z, +y). PHAI ap dung cho CA acc va gyro, neu khong thi
+   40 dac trung nhom gyro sai het. */
+float ax = -(float)raw_ax / 8192.0f;
+float ay =  (float)raw_az / 8192.0f;
+float az =  (float)raw_ay / 8192.0f;
+float gx = -(float)raw_gx * 5.32105e-4f;
+float gy =  (float)raw_gz * 5.32105e-4f;
+float gz =  (float)raw_gy * 5.32105e-4f;
+```
+
+Chưa áp dụng — cần xác nhận board còn gắn nguyên như lúc lấy log.
+
+**Vì sao phải sửa dù log trông có vẻ chạy đúng:** mô phỏng cho thấy ở hướng −X model đoán
+`STANDING` với độ tin cậy **99,4%**, còn ở hướng +X đúng chuẩn chỉ **55,6%**. Model tự tin
+hơn ở hướng sai, vì (−1,0,0) nằm ngoài vùng dữ liệu train nên model tuyến tính ngoại suy
+ra biên rất xa. Tự tin cao trên đầu vào sai là tình huống không có gì cảnh báo.
+
+Đo trên toàn bộ 24 hướng: chỉ **1/24** hướng cho accuracy ≥ 80%, trung bình 30,9%,
+tệ nhất 4,3%.
+
+## Thời gian tính toán
+
+Chưa đo trên board. Ước lượng phân tích: ~62.500 phép + 1.176 phép `sqrt` mỗi cửa sổ,
+tương đương ~0,44 ms ở 180 MHz. Nhưng `calc_median` trong `har_dsp.c` dùng insertion sort
+O(N²) và được gọi 2 lần mỗi kênh × 12 kênh, nên thực tế có thể lên **~5 ms**.
+
+Ngân sách là **1.280 ms** (cứ 64 mẫu mới mới phân loại một lần), nên kể cả 5 ms vẫn chỉ
+chiếm **0,4% CPU**. Không phải vấn đề.
+
+Cần đo thật bằng `DWT->CYCCNT` khi có board.
+
+## Toolchain
+
+| | |
+|---|---|
+| IDE | **STM32CubeIDE** (`.cproject`, `test.ioc`, `Debug/`) |
+| Thư viện | STM32F4 HAL + **CMSIS-DSP** (`arm_math.h`) |
+| Ngôn ngữ | C, `float` toàn bộ (không `double`) |
+
+CMSIS-DSP dùng cho: `arm_rfft_fast_f32` (FFT 128 điểm), `arm_biquad_cascade_df1_f32`
+(lọc gravity), `arm_mean_f32` / `arm_std_f32` / `arm_max_f32` / `arm_min_f32` /
+`arm_rms_f32` / `arm_dot_prod_f32`.
+
+## Việc còn lại về phần cứng
+
+- [ ] Áp dụng hoán vị trục `(-x, +z, +y)` cho cả acc và gyro
+- [ ] Đo thời gian 1 cửa sổ bằng `DWT->CYCCNT`
+- [ ] Đối chiếu datasheet về bit `FCHOICE` / `DLPFCFG` của ICM-20948
+- [ ] Xác định baud rate UART (chưa tìm thấy trong code đã đọc)
+- [ ] Cân nhắc cắt 117 KB bảng FFT nếu cần chỗ

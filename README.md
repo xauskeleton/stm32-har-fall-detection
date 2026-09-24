@@ -18,7 +18,8 @@ chia train/test **theo người** — 21 người để train, 9 người hoàn 
 | Model | LogisticRegression 120 → 12 |
 | Số tham số | **1.452** (5,7 KB float32) |
 | Thời gian tính 1 cửa sổ | **0,44 ms** trên M4F 180 MHz → **0,034% CPU** |
-| RAM cần | ~4,5 KB / 128 KB |
+| Flash thật đã dùng | **161,7 KB / 512 KB** (31,6%) |
+| RAM thật đã dùng | **~15,2 KB / 128 KB** (11,9%) |
 
 Nhìn theo mức độ mà bộ phát hiện té ngã thực sự dùng (gộp "đi/đứng/ngồi" thành một nhóm):
 
@@ -117,6 +118,7 @@ firmware/               sinh tự động — KHÔNG sửa tay
   test/golden_vectors.h      dữ liệu đối chiếu C vs Python
 docs/
   DECISIONS.md          10 mục — số liệu chứng minh từng quyết định kỹ thuật
+  HARDWARE.md           phần cứng thực tế: clock, cảm biến, flash/RAM đo từ build
   TODO.md               việc còn lại và câu hỏi còn treo
 ```
 
@@ -183,5 +185,8 @@ Mỗi quyết định đều có số liệu chứng minh trong `docs/DECISIONS.
 
 Phần Python xong và đã đo đạc đầy đủ. Tham số model đã xuất sang C và biên dịch được.
 
-Còn thiếu phần thuật toán C (lọc median, biquad, FFT, 120 đặc trưng, nhân ma trận,
-state machine) và phần đọc cảm biến — xem `docs/TODO.md`.
+Firmware STM32CubeIDE đã có ở branch `Embeded_System` và **đã build được**: flash
+161,7 KB / 512 KB, RAM ~15,2 KB / 128 KB. Thông số phần cứng thật ở `docs/HARDWARE.md`.
+
+Hai việc còn lại trước khi firmware chạy đúng: hoán vị trục cảm biến, và huấn luyện lại
+model bằng chính `har/dsp.py` của repo — xem `docs/TODO.md`.
