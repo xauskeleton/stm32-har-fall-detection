@@ -134,6 +134,7 @@ firmware/               sinh tự động — KHÔNG sửa tay
   Core/Src/har_classifier.c  chọn cột + chuẩn hoá + nhân ma trận + argmax          (viết tay)
   Core/Src/har_pipeline.c    ring buffer, chạy mỗi 64 mẫu mới                      (viết tay)
   Core/Src/fall_detect.c     bản sao của har/fall.py                               (viết tay)
+  Core/Src/har_app.c         hoán vị trục + kẹp tín hiệu, không phụ thuộc HAL      (viết tay)
   test/test_parity.c         đối chiếu C vs Python, make -C firmware test          (viết tay)
 docs/
   DECISIONS.md          số liệu chứng minh từng quyết định kỹ thuật

@@ -51,16 +51,20 @@ accuracy giống hệt (91,73% cả hai — xem `DECISIONS.md` mục 7 về con 
       Lý do thang đo: ±2 g dùng không được vì ngưỡng va đập là 2,2 g; ±500 °/s thì cắt ngọn.
       Xem `DECISIONS.md` mục 8 — con số "629 °/s" trong các bản trước là **sai**, nó đo trên
       dữ liệu đã bị cộng nhiễu.
-- [ ] **Kẹp tín hiệu trước khi gọi `har_pipeline_push()`**: acc vào ±2,0 g, gyro vào ±10 rad/s.
-      HAPT bị bão hoà ở đúng hai mốc đó (42 + 41 mẫu bị cắt ngọn) nên model chưa từng thấy giá
-      trị vượt quá. Nếu muốn đo đỉnh va đập thật cho kênh sốc thì phải đưa thêm một đường
-      **không kẹp** vào `har_pipeline.c`.
-- [ ] Hoán vị trục cảm biến. Dữ liệu ghi từ board cho thấy gravity nằm trên −X khi đứng, còn
-      HAPT cần +X → cần `(−x, +z, +y)` cho **cả acc và gyro**. Phải xác nhận board còn gắn
-      đúng như lúc ghi trước khi áp.
+- [x] **Kẹp tín hiệu** — `har_app.c` kẹp **từng trục** vào ±2,0 g và ±10 rad/s trước khi đưa
+      vào pipeline. HAPT bị bão hoà ở đúng hai mốc đó nên model chưa từng thấy giá trị vượt quá.
+      Kẹp từng trục **không** làm chết nhánh phát hiện sốc: ngưỡng 2,2 g đo trên chuẩn
+      `|a| = sqrt(x²+y²+z²)`, mà chuẩn lên tới 2√3 = 3,46 g dù mỗi trục bị kẹp ở 2 g — đúng
+      như dữ liệu HAPT (bão hoà từng trục, vẫn có |a| tới 2,43 g ở phân vị 99 khi đi lại).
+- [x] Hoán vị trục — `har_app.c` áp `(−x, +z, +y)` cho **cả acc và gyro** (`HAR_AXIS_PERMUTE`).
+      **PHẢI xác nhận board còn gắn đúng như lúc ghi dữ liệu** trước khi tin bộ số này; đặt
+      `HAR_AXIS_PERMUTE 0` để tắt.
 - [ ] `board.c` — timer ngắt 50 Hz, UART, LED
-- [ ] `main.c` — vòng lặp chính: đọc cảm biến → kẹp → `har_pipeline_push()` →
-      `fall_update()` → xuất UART/LED
+- [x] `har_app.c` — lớp ứng dụng KHÔNG phụ thuộc HAL: hoán vị trục → kẹp →
+      `har_pipeline_push()` → `fall_update()`. Header có sẵn đoạn mẫu gọi từ ngắt TIM6.
+- [ ] `main.c` — ghép `har_app_on_sample()` vào ngắt TIM6 50 Hz, xuất UART/LED. Khung project
+      CubeIDE (`icm20948.c` đã chạy thật, HAL, startup, `.ioc`) nằm ở branch `Embeded_System` —
+      việc còn lại là **ghép**, không phải viết lại driver.
 - [ ] Đo thực tế: thời gian 1 cửa sổ bằng `DWT->CYCCNT`, RAM/flash thật.
       Ngân sách là 1.280 ms nên không có rủi ro, nhưng **chưa đo** cho bộ 516 đặc trưng.
       RAM dự kiến: buffer tín hiệu 7,5 KB + kênh sốc 1,5 KB + scratch ~2 KB.

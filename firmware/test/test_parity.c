@@ -9,6 +9,7 @@
 #include <stdio.h>
 
 #include "golden_vectors.h"
+#include "har_app.h"
 #include "har_classifier.h"
 #include "har_pipeline.h"
 
@@ -42,7 +43,21 @@ int main(void)
         n_win++;
     }
 
-    int ok = (n_win == GOLDEN_N_WINDOWS) && (n_label_bad == 0) && (n_feat_bad == 0);
+    /* --- lan 2: qua har_app (hoan vi + kep + state machine te nga) ---
+     * Bien dich test voi -DHAR_AXIS_PERMUTE=0 vi golden vectors da o he truc HAPT. */
+    int n_app_bad = 0, n_app_win = 0, n_fall = 0;
+    har_app_reset();
+    for (int i = 0; i < GOLDEN_N_SAMPLES; i++) {
+        har_app_event_t ev;
+        if (!har_app_on_sample(GOLDEN_ACC[i], GOLDEN_GYRO[i], &ev)) continue;
+        if (n_app_win >= GOLDEN_N_WINDOWS) break;
+        if (ev.label != GOLDEN_LABELS[n_app_win]) n_app_bad++;
+        if (ev.fall) n_fall++;
+        n_app_win++;
+    }
+
+    int ok = (n_win == GOLDEN_N_WINDOWS) && (n_label_bad == 0) && (n_feat_bad == 0)
+             && (n_app_win == GOLDEN_N_WINDOWS) && (n_app_bad == 0);
     printf("\n=== doi chieu C vs Python ===\n");
     printf("  cua so kiem tra       : %d / %d\n", n_win, GOLDEN_N_WINDOWS);
     printf("  nhan lech             : %d\n", n_label_bad);
@@ -51,6 +66,8 @@ int main(void)
     if (worst_col >= 0)
         printf("  sai so lon nhat       : %.3g  (cua so %d, cot chon thu %d)\n",
                (double)worst, worst_win, worst_col);
+    printf("  qua har_app           : %d / %d cua so, %d nhan lech, %d su kien te nga\n",
+           n_app_win, GOLDEN_N_WINDOWS, n_app_bad, n_fall);
     printf("  ket qua               : %s\n", ok ? "DAT" : "KHONG DAT");
     return ok ? 0 : 1;
 }
