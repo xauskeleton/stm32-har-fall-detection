@@ -41,16 +41,37 @@ accuracy giống hệt (91,73% cả hai — xem `DECISIONS.md` mục 7 về con 
 - [x] `test/test_parity.c` + `Makefile` — `make -C firmware test`, tiêu chí ĐẠT là **nhãn khớp
       từng cửa sổ**; `GOLDEN_TOL = 0.3` chỉ để chẩn đoán
 
-## Chưa làm — phần cứng (chờ có board)
+## Đã xong — project STM32CubeIDE
 
-- [ ] Chốt toolchain (khuyến nghị STM32CubeIDE — một bộ cài, có sẵn trình biên dịch + nạp)
-- [ ] Chốt bus cảm biến: I2C hay SPI
-- [ ] `icm20948.c` — driver, tách lớp `read_reg`/`write_reg` để đổi I2C↔SPI chỉ sửa 2 hàm.
-      Cấu hình **±4 g / ±1000 °/s**, output 50 Hz.
-      **Đổi đơn vị sang g và rad/s cho khớp HAPT.**
-      Lý do thang đo: ±2 g dùng không được vì ngưỡng va đập là 2,2 g; ±500 °/s thì cắt ngọn.
-      Xem `DECISIONS.md` mục 8 — con số "629 °/s" trong các bản trước là **sai**, nó đo trên
-      dữ liệu đã bị cộng nhiễu.
+`firmware/` giờ là project CubeIDE đầy đủ, mở trực tiếp bằng CubeIDE (`test.ioc`). Khung phần
+cứng copy từ branch `Embeded_System` — bản đó **đã build và chạy trên board thật**, nên không
+sửa lại, chỉ thay phần thuật toán.
+
+- [x] `icm20948.c` + `.h` — driver I2C1 400 kHz, địa chỉ 0x68, có xử lý chuyển bank thanh ghi
+- [x] `main.c` — CubeMX sinh (clock 180 MHz, GPIO, I2C1, USART1, TIM6 50 Hz), chỉ sửa trong các
+      khối `USER CODE`: đọc cảm biến → đổi đơn vị (±4 g → g, ±1000 dps → rad/s) →
+      `har_app_on_sample()` → in UART + LED theo trạng thái (PC1 xanh IDLE, PC2 vàng SHOCK,
+      PC3 đỏ FALLEN)
+- [x] `stm32f4xx_it.c` — ngắt TIM6 đặt cờ lấy mẫu, có đếm mẫu bị bỏ
+- [x] HAL + CMSIS core, startup, linker script, `.cproject` / `.project` / `.ioc`
+- [x] **Bỏ `Drivers/CMSIS_DSP`** — code mới tự viết FFT nên không dùng nữa. Tiết kiệm 559 file /
+      13,9 MB trong repo, và **~117 KB flash** (bảng tra twiddle của CMSIS-DSP là thứ chiếm
+      flash lớn nhất, xem `HARDWARE.md`). Đã xoá 30 chỗ nhắc `CMSIS_DSP` trong `.cproject`.
+- [x] **Bỏ khởi tạo từ kế AK09916** — HAPT chỉ có acc + gyro, thêm từ kế vào lúc inference sẽ
+      tạo đặc trưng mà model chưa từng thấy
+
+Kiểm chứng được từ máy không có toolchain ARM: `gcc -fsyntax-only` với đúng include của HAL cho
+**0 lỗi** trên `main.c`, `icm20948.c`, `stm32f4xx_it.c`, `stm32f4xx_hal_msp.c`,
+`system_stm32f4xx.c`. Tức mọi symbol và chữ ký hàm khớp — **nhưng chưa build cho ARM và chưa
+chạy trên board.**
+
+## Chưa làm — cần board và CubeIDE
+
+- [ ] **Build bằng CubeIDE** và lấy số liệu thật: flash / RAM / thời gian 1 cửa sổ bằng
+      `DWT->CYCCNT`. Không làm được từ đây: máy không có `arm-none-eabi-gcc`.
+- [ ] **Xác nhận hoán vị trục** `(−x, +z, +y)` còn đúng — phụ thuộc board hiện gắn thế nào.
+      Đặt `HAR_AXIS_PERMUTE 0` trong `har_app.h` để tắt.
+- [ ] Chốt bus cảm biến: I2C (đang dùng) hay SPI — nếu đổi thì chỉ sửa `read_reg`/`write_reg`
 - [x] **Kẹp tín hiệu** — `har_app.c` kẹp **từng trục** vào ±2,0 g và ±10 rad/s trước khi đưa
       vào pipeline. HAPT bị bão hoà ở đúng hai mốc đó nên model chưa từng thấy giá trị vượt quá.
       Kẹp từng trục **không** làm chết nhánh phát hiện sốc: ngưỡng 2,2 g đo trên chuẩn
@@ -59,15 +80,8 @@ accuracy giống hệt (91,73% cả hai — xem `DECISIONS.md` mục 7 về con 
 - [x] Hoán vị trục — `har_app.c` áp `(−x, +z, +y)` cho **cả acc và gyro** (`HAR_AXIS_PERMUTE`).
       **PHẢI xác nhận board còn gắn đúng như lúc ghi dữ liệu** trước khi tin bộ số này; đặt
       `HAR_AXIS_PERMUTE 0` để tắt.
-- [ ] `board.c` — timer ngắt 50 Hz, UART, LED
-- [x] `har_app.c` — lớp ứng dụng KHÔNG phụ thuộc HAL: hoán vị trục → kẹp →
-      `har_pipeline_push()` → `fall_update()`. Header có sẵn đoạn mẫu gọi từ ngắt TIM6.
-- [ ] `main.c` — ghép `har_app_on_sample()` vào ngắt TIM6 50 Hz, xuất UART/LED. Khung project
-      CubeIDE (`icm20948.c` đã chạy thật, HAL, startup, `.ioc`) nằm ở branch `Embeded_System` —
-      việc còn lại là **ghép**, không phải viết lại driver.
-- [ ] Đo thực tế: thời gian 1 cửa sổ bằng `DWT->CYCCNT`, RAM/flash thật.
-      Ngân sách là 1.280 ms nên không có rủi ro, nhưng **chưa đo** cho bộ 516 đặc trưng.
-      RAM dự kiến: buffer tín hiệu 7,5 KB + kênh sốc 1,5 KB + scratch ~2 KB.
+- [ ] Ngân sách thời gian là 1.280 ms nên không có rủi ro, nhưng **chưa đo** cho bộ 516 đặc
+      trưng. RAM dự kiến: buffer tín hiệu 7,5 KB + kênh sốc 1,5 KB + scratch ~2 KB.
 
 ## Chưa làm — phần Python
 

@@ -18,6 +18,8 @@ env/
 
 # Firmware build
 build/
+Debug/
+Release/
 *.o
 *.elf
 *.bin

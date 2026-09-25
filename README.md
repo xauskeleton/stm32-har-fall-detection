@@ -219,6 +219,7 @@ Phần Python xong và đã đo đạc đầy đủ. Tham số model đã xuất
 Firmware STM32CubeIDE đã có ở branch `Embeded_System` và **đã build được**: flash
 161,7 KB / 512 KB, RAM ~15,2 KB / 128 KB. Thông số phần cứng thật ở `docs/HARDWARE.md`.
 
-Việc còn lại trước khi firmware chạy đúng: hoán vị trục cảm biến, kẹp tín hiệu cho kênh phân
-loại (HAPT bão hoà ở 2 g / 573 °/s nhưng board thì không), và cài các phép còn thiếu trong C
-(`arCoeff` Burg-4, `entropy` 256 ô, `bandsEnergy`) — xem `docs/TODO.md`.
+`firmware/` là project **STM32CubeIDE đầy đủ** — mở `firmware/test.ioc` là build được. Toàn bộ
+thuật toán đã có bản C và đối chiếu khớp với Python. Việc còn lại: **build bằng CubeIDE để lấy
+số liệu flash/RAM/thời gian thật**, và xác nhận hoán vị trục cảm biến còn đúng với cách gắn
+board hiện tại — xem `docs/TODO.md`.
