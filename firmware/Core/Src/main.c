@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "icm20948.h"
 #include "har_app.h"
+#include <math.h>
 #include <stdio.h>
 /* USER CODE END Includes */
 
@@ -56,8 +57,13 @@ ICM20948_int16_vector3 gyro_data;
 /* Ket qua phan loai gan nhat, de in ra UART moi 2 giay */
 static har_app_event_t last_ev = { 0, 0, 0, 0.0f, 0.0f };
 static uint32_t n_fall_total = 0;
+static float last_acc_raw[3] = { 0.0f, 0.0f, 0.0f };   /* truoc hoan vi, de hieu chuan */
 
 #define DEG2RAD 0.0174532925f
+
+/* printf cua newlib-nano mac dinh KHONG ho tro %f -> in tay phan nguyen va 2 so le */
+#define CENT(v)  (int)(v), (int)(fabsf(((v) - (float)(int)(v)) * 100.0f))
+#define FRAC2(v) (int)(fabsf(((v) - (float)(int)(v)) * 100.0f))
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -141,10 +147,19 @@ int main(void)
       const fall_state_t *fs = har_app_fall_state();
       const char *state_name = (fs->state == FALL_STATE_IDLE)  ? "IDLE"
                              : (fs->state == FALL_STATE_SHOCK) ? "SHOCK" : "FALLEN";
-      printf("Hanh dong: %-18s | Trang thai: %-6s | |a| %d.%02d..%d.%02d g | so lan nga: %lu\r\n",
+      float gv[3];
+      har_app_gravity(gv);
+
+      /* In ca acc THO (truoc hoan vi) va GRAVITY (sau hoan vi) de hieu chuan truc.
+       * Dung yen thi gravity PHAI ra (+1.0, ~0, ~0) - neu khong, xem har_app.h. */
+      printf("%-18s | %-6s | acc tho (%+d.%02d %+d.%02d %+d.%02d)"
+             " | gravity (%+d.%02d %+d.%02d %+d.%02d)"
+             " | |a| %d.%02d..%d.%02d g | nga: %lu\r\n",
              har_label_name(last_ev.label), state_name,
-             (int)last_ev.a_min, (int)((last_ev.a_min - (float)(int)last_ev.a_min) * 100.0f),
-             (int)last_ev.a_max, (int)((last_ev.a_max - (float)(int)last_ev.a_max) * 100.0f),
+             CENT(last_acc_raw[0]), CENT(last_acc_raw[1]), CENT(last_acc_raw[2]),
+             CENT(gv[0]), CENT(gv[1]), CENT(gv[2]),
+             (int)last_ev.a_min, FRAC2(last_ev.a_min),
+             (int)last_ev.a_max, FRAC2(last_ev.a_max),
              (unsigned long)n_fall_total);
     }
 
@@ -169,6 +184,10 @@ int main(void)
       gyro[0] = ((float)gyro_data.x / 32.768f) * DEG2RAD;
       gyro[1] = ((float)gyro_data.y / 32.768f) * DEG2RAD;
       gyro[2] = ((float)gyro_data.z / 32.768f) * DEG2RAD;
+
+      last_acc_raw[0] = acc[0];
+      last_acc_raw[1] = acc[1];
+      last_acc_raw[2] = acc[2];
 
       har_app_event_t ev;
       if (har_app_on_sample(acc, gyro, &ev)) {

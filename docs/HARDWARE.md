@@ -194,3 +194,25 @@ CMSIS-DSP dùng cho: `arm_rfft_fast_f32` (FFT 128 điểm), `arm_biquad_cascade_
 - [ ] Đối chiếu datasheet về bit `FCHOICE` / `DLPFCFG` của ICM-20948
 - [ ] Xác định baud rate UART (chưa tìm thấy trong code đã đọc)
 - [ ] Cân nhắc cắt 117 KB bảng FFT nếu cần chỗ
+
+## Hướng trục — lỗi hay gặp nhất khi đưa lên board mới
+
+HAPT thu bằng điện thoại kẹp ở **thắt lưng**, và hướng gravity là thứ quyết định tư thế:
+
+| tư thế | gravity trung bình (g) | trục "xuống" |
+|---|---|---|
+| **STANDING** | (+1,001, −0,166, −0,021) | **+X** |
+| SITTING | (+0,957, +0,129, +0,146) | +X |
+| WALKING | (+0,998, −0,180, −0,060) | +X |
+| WALKING_UPSTAIRS | (+0,953, −0,269, −0,148) | +X |
+| WALKING_DOWNSTAIRS | (+0,996, −0,153, −0,055) | +X |
+| **LAYING** | (+0,069, +0,638, +0,541) | **+Y** (X ≈ 0) |
+
+Năm trong sáu lớp có gravity trên **+X**; chỉ LAYING là X ≈ 0. Nghĩa là **nếu gravity không rơi
+vào +X lúc đứng yên, model đọc thành LAYING bất kể người đang đứng** — và đó đúng là triệu chứng
+gặp khi thử trên board lần đầu.
+
+Đây **không** phải lỗi model: nó là lệch hệ trục giữa board và điện thoại của HAPT.
+`har_app.h` có bảng `HAR_AXIS_SRC_*` / `HAR_AXIS_SIGN_*` kèm quy trình hiệu chuẩn 4 bước, và
+`main.c` in cả `acc tho` (trước hoán vị) lẫn `gravity` (sau hoán vị) ra UART để hiệu chuẩn
+không cần nạp lại firmware nhiều lần. Đứng yên thì `gravity` phải ra `(+1.0, ~0, ~0)`.

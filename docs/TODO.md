@@ -69,8 +69,14 @@ chạy trên board.**
 
 - [ ] **Build bằng CubeIDE** và lấy số liệu thật: flash / RAM / thời gian 1 cửa sổ bằng
       `DWT->CYCCNT`. Không làm được từ đây: máy không có `arm-none-eabi-gcc`.
-- [ ] **Xác nhận hoán vị trục** `(−x, +z, +y)` còn đúng — phụ thuộc board hiện gắn thế nào.
-      Đặt `HAR_AXIS_PERMUTE 0` trong `har_app.h` để tắt.
+- [ ] **HIỆU CHUẨN HOÁN VỊ TRỤC — đây là việc gấp nhất.** Thử trên board thật: đang **đứng**
+      mà model đọc ra **LAYING** liên tục. Nguyên nhân: HAPT quy định gravity nằm trên **+X**
+      khi đứng/ngồi/đi (≈ +1.00 g), còn khi **nằm** thì X ≈ 0 và gravity dồn sang Y/Z. Nếu
+      gravity không rơi vào +X thì model đọc thành LAYING bất kể người đang đứng.
+      Cách hiệu chuẩn (có hướng dẫn đầy đủ trong `har_app.h`): gắn board đúng như khi dùng,
+      đứng thẳng, đọc dòng UART `acc tho (...)` — trục nào ≈ ±1.0 g là trục chỉ xuống đất, điền
+      vào `HAR_AXIS_SRC_X` / `HAR_AXIS_SIGN_X`. Nạp lại và kiểm `gravity (...)` phải ra
+      `(+1.0, ~0, ~0)`.
 - [ ] Chốt bus cảm biến: I2C (đang dùng) hay SPI — nếu đổi thì chỉ sửa `read_reg`/`write_reg`
 - [x] **Kẹp tín hiệu** — `har_app.c` kẹp **từng trục** vào ±2,0 g và ±10 rad/s trước khi đưa
       vào pipeline. HAPT bị bão hoà ở đúng hai mốc đó nên model chưa từng thấy giá trị vượt quá.

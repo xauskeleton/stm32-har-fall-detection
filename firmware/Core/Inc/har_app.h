@@ -36,12 +36,39 @@
 #define HAR_CLAMP_ACC_G     2.0f
 #define HAR_CLAMP_GYRO_RADS 10.0f
 
-/* Hoan vi truc: board -> he truc cua HAPT.
- * Do tu du lieu ghi thuc te: dung yen thi gravity nam tren -X cua board, con HAPT
- * can +X  =>  (x, y, z)_hapt = (-x, +z, +y)_board, ap cho CA acc va gyro.
- * PHAI xac nhan board con gan dung nhu luc ghi truoc khi tin bo so nay.
- * Dat -DHAR_AXIS_PERMUTE=0 de tat (du lieu HAPT da o dung he truc nay).
+/* ==========================================================================
+ * HOAN VI TRUC - PHAI HIEU CHUAN CHO TUNG CACH GAN BOARD
+ * ==========================================================================
+ *
+ * HAPT thu bang dien thoai kep o THAT LUNG, va huong gravity quyet dinh tu the:
+ *
+ *     DUNG / NGOI / DI BO :  gravity ~ (+1.00, -0.17, -0.02) g  -> nam tren +X
+ *     NAM                 :  gravity ~ (+0.07, +0.64, +0.54) g  -> X gan 0
+ *
+ * => Neu gravity KHONG nam tren +X luc dung yen, model doc thanh LAYING bat ke nguoi
+ *    dang dung. Day la loi hay gap nhat khi dua len board moi.
+ *
+ * CACH HIEU CHUAN (khong can nap lai firmware nhieu lan):
+ *
+ *   1. Gan board DUNG NHU khi dung thuc te, roi DUNG THANG va giu yen.
+ *   2. Doc dong UART: "acc tho" cho 3 gia tri cua board.
+ *   3. Truc nao doc gan +-1.0 g chinh la truc chi xuong dat. Dat:
+ *        HAR_AXIS_SRC_X  = so hieu truc do  (0 = x, 1 = y, 2 = z)
+ *        HAR_AXIS_SIGN_X = -1 neu no doc -1.0 g, +1 neu doc +1.0 g
+ *      Hai truc con lai dien vao Y va Z theo thu tu nao cung duoc.
+ *   4. Nap lai, kiem dong "gravity" phai ra (+1.0, ~0, ~0).
+ *
+ * Vi du: board doc (-1.0, 0, 0) luc dung  ->  SRC_X = 0, SIGN_X = -1
+ *        board doc (0, 0, +1.0) luc dung  ->  SRC_X = 2, SIGN_X = +1
  */
+#define HAR_AXIS_SRC_X   0
+#define HAR_AXIS_SIGN_X  (-1.0f)
+#define HAR_AXIS_SRC_Y   2
+#define HAR_AXIS_SIGN_Y  (+1.0f)
+#define HAR_AXIS_SRC_Z   1
+#define HAR_AXIS_SIGN_Z  (+1.0f)
+
+/* Dat -DHAR_AXIS_PERMUTE=0 de tat hoan vi (du lieu HAPT da o dung he truc nay). */
 #ifndef HAR_AXIS_PERMUTE
 #define HAR_AXIS_PERMUTE 1
 #endif
@@ -65,5 +92,9 @@ int har_app_on_sample(const float acc_g[3], const float gyro_rads[3],
 
 /* Trang thai state machine hien tai - de hien LED hoac go loi. */
 const fall_state_t *har_app_fall_state(void);
+
+/* Uoc luong gravity SAU hoan vi (loc thong thap 1 chieu), CHI de hieu chuan va go loi -
+ * khong dung trong duong tinh dac trung. Dung yen thi phai ra (+1.0, ~0, ~0). */
+void har_app_gravity(float out[3]);
 
 #endif /* HAR_APP_H */
