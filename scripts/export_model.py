@@ -44,19 +44,21 @@ def main():
     ap.add_argument('--out', default='firmware')
     ap.add_argument('--data', default=None, help='duong dan HAPT RawData')
     ap.add_argument('--golden', nargs=2, metavar=('ACC', 'GYRO'), default=None)
-    ap.add_argument('--golden-samples', type=int, default=384)
+    # 385 = 5 cua so tron (0..383) + 1 mau de median 3 streaming xuat duoc chi so 383
+    ap.add_argument('--golden-samples', type=int, default=385)
     args = ap.parse_args()
 
-    scaler, clf, meta = har_model.load_bundle(args.models)
+    scaler, clf, cols, meta = har_model.load_bundle(args.models)
     if not meta:
         raise SystemExit('Thieu models/meta.json - chay scripts/train.py truoc')
 
-    print('Model : %s | %d dac trung | %d tham so'
-          % (meta['arch'], meta['n_features'], meta['params']))
+    print('Model : %s | giu %d / %d dac trung | %d tham so'
+          % (meta['arch'], meta['n_features'], meta['n_features_all'], meta['params']))
     print('Nguong te nga: %s' % str(fall.FallParams()))
 
     golden = pick_golden(args)
-    written = export_c.export(scaler, clf, meta, out_dir=args.out, golden=golden)
+    written = export_c.export(scaler, clf, meta, cols,
+                              out_dir=args.out, golden=golden)
     print()
     for p in written:
         print('  %-44s %6.1f KB' % (p, os.path.getsize(p) / 1024))

@@ -1,25 +1,30 @@
 {
-  "arch": "logreg 120-12",
+  "arch": "logreg 160-12",
   "kind": "logreg",
   "C": 0.1,
-  "groups": [
-    "total_acc",
+  "signals": [
     "body_acc",
-    "gyro"
+    "gravity",
+    "body_acc_jerk",
+    "gyro",
+    "gyro_jerk"
   ],
-  "n_features": 120,
-  "params": 1452,
-  "flash_kb_f32": 5.7,
+  "n_features_all": 516,
+  "n_features": 160,
+  "selection": "RFE tren tap train (21 nguoi)",
+  "params": 1932,
+  "flash_kb_f32": 7.5,
   "fs": 50,
   "window": 128,
   "step": 64,
   "n_train": 7767,
   "n_test": 3162,
   "metrics": {
-    "accuracy": 86.88,
-    "precision": 87.0,
-    "recall": 86.88,
-    "f1": 86.85,
-    "macro_f1": 80.69
+    "accuracy": 93.23,
+    "precision": 93.47,
+    "recall": 93.23,
+    "f1": 93.22,
+    "macro_f1": 85.81,
+    "fall_f1": 69.16
   }
 }

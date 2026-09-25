@@ -1,39 +1,52 @@
-/* SINH TU DONG boi scripts/export_model.py ngay 2026-09-22 - KHONG SUA TAY.
+/* SINH TU DONG boi scripts/export_model.py ngay 2026-09-25 - KHONG SUA TAY.
  *
- * Model : logreg 120-12, accuracy 86.88% tren tap test 9 nguoi chua tung thay
- * Nhom  : total_acc, body_acc, gyro
+ * Model : logreg 160-12, accuracy 93.23% tren tap test 9 nguoi chua tung thay
+ * Nhom  : body_acc, gravity, body_acc_jerk, gyro, gyro_jerk
  */
 #ifndef MODEL_PARAMS_H
 #define MODEL_PARAMS_H
+
+#include <stdint.h>
 
 /* ---- Lay mau va cat cua so ---- */
 #define HAR_FS               50     /* Hz */
 #define HAR_WINDOW           128    /* mau = 2.56 s */
 #define HAR_STEP             64   /* mau giua 2 lan phan loai = 1.28 s */
-#define HAR_N_SPECTRUM       64   /* so bin pho = HAR_WINDOW/2 */
 
 /* ---- Kich thuoc ---- */
-#define HAR_N_GROUPS         3
-#define HAR_N_CHANNELS       4    /* x, y, z, magnitude */
-#define HAR_N_FEATURES       120
+#define HAR_N_SIGNALS        5   /* nhom tin hieu 3 truc */
+#define HAR_N_FEATURES_ALL   516   /* so dac trung TINH RA */
+#define HAR_N_FEATURES       160  /* so dac trung GIU LAI -> vao model */
 #define HAR_N_CLASSES        12
 
 /* ---- Thu tu nhom tin hieu: QUYET DINH thu tu dac trung, dao la model sai im lang ---- */
-#define HAR_GROUP_TOTAL_ACC  0
-#define HAR_GROUP_BODY_ACC   1
-#define HAR_GROUP_GYRO       2
+#define HAR_SIG_BODY_ACC         0
+#define HAR_SIG_GRAVITY          1
+#define HAR_SIG_BODY_ACC_JERK    2
+#define HAR_SIG_GYRO             3
+#define HAR_SIG_GYRO_JERK        4
 
-/* ---- Loc ---- */
-#define HAR_N_SOS            2   /* section biquad cho lowpass 0.3 Hz tach gravity */
-#define HAR_MEDIAN_SHOCK     3    /* cua so median, CHI cho kenh phat hien soc */
+/* ---- Mien tan so ---- */
+#define HAR_N_SPECTRUM       64  /* bin 1..64 cua FFT 128 diem, BO bin DC */
+#define HAR_SPEC_SCALE       64.0f /* chia pho cho so nay -> bien do 1 phia */
+#define HAR_N_BANDS          14  /* so dai tan cho bandsEnergy */
+
+/* ---- Cac phep dac biet ---- */
+#define HAR_ENTROPY_BINS     256  /* histogram o CO DINH tren [0,1] */
+#define HAR_AR_ORDER         4  /* bac mo hinh AR (Burg) */
+
+/* ---- Loc: median 3 -> lowpass 20 Hz -> tach gravity 0.3 Hz ---- */
+#define HAR_MEDIAN           3    /* cua so median, cho CA dac trung VA kenh soc */
+#define HAR_N_SOS            2   /* section biquad, giong nhau cho ca 2 bo loc */
 
 /* ---- Nguong phat hien te nga ---- */
 #define FALL_FREEFALL_G      0.600000024f
-#define FALL_IMPACT_G        2.0f
+#define FALL_IMPACT_G        2.20000005f
 #define FALL_CONFIRM_WIN     4
 #define FALL_LAYING_CONFIRM  2
 #define FALL_VOLUNTARY_GUARD 4
 #define FALL_RECOVER_WIN     2
+#define FALL_UPRIGHT_MIN     4
 
 /* ---- Nhan hoat dong (giu nguyen ID cua HAPT) ---- */
 #define HAR_WALKING               1
@@ -52,9 +65,21 @@
 /* ---- So lieu (dinh nghia trong model_params.c) ---- */
 
 /* SOS: [section][6] = b0, b1, b2, a0, a1, a2  (a0 luon = 1) */
-extern const float HAR_SOS_GRAVITY[HAR_N_SOS][6];
+extern const float HAR_SOS_NOISE[HAR_N_SOS][6];      /* lowpass 20 Hz khu nhieu */
+extern const float HAR_SOS_GRAVITY[HAR_N_SOS][6];    /* lowpass 0.3 Hz tach gravity */
 
-/* Chuan hoa: x_chuan[i] = (x[i] - HAR_SCALER_MEAN[i]) * HAR_SCALER_INV_SCALE[i] */
+/* Trang thai XAC LAP cho dau vao = 1.0. Khoi tao state = ZI[section][i] * mau_dau_tien,
+ * nho do khong co transient. Bo qua thi 4 cua so dau sau moi lan cap dien sai nhan. */
+extern const float HAR_SOS_NOISE_ZI[HAR_N_SOS][2];
+extern const float HAR_SOS_GRAVITY_ZI[HAR_N_SOS][2];
+
+/* Bien cac dai tan cho bandsEnergy: [dai][2] = bin dau, bin cuoi (dem tu 1) */
+extern const uint8_t HAR_BANDS[HAR_N_BANDS][2];
+
+/* Chon cot: x_chon[i] = dac_trung[HAR_SELECTED[i]], i = 0..HAR_N_FEATURES-1 */
+extern const uint16_t HAR_SELECTED[HAR_N_FEATURES];
+
+/* Chuan hoa: x_chuan[i] = (x_chon[i] - HAR_SCALER_MEAN[i]) * HAR_SCALER_INV_SCALE[i] */
 extern const float HAR_SCALER_MEAN[HAR_N_FEATURES];
 extern const float HAR_SCALER_INV_SCALE[HAR_N_FEATURES];
 

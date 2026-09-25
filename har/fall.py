@@ -37,7 +37,7 @@ WINDOW_PERIOD = cfg.STEP / cfg.FS
 class FallParams:
     """Tat ca nguong. scripts/export_model.py ghi nguyen bo nay sang C dang #define."""
     freefall_g: float = 0.60     # |a| tut duoi muc nay -> dang roi tu do
-    impact_g: float = 2.00       # |a| vot qua muc nay  -> cu dap xuong san
+    impact_g: float = 2.20       # |a| vot qua muc nay  -> cu dap xuong san
 
     # 'both' = phai co CA rot tu do VA cu dap. Bat buoc phai tinh tren tin hieu
     # da loc median 3 (dung shock_windows()), neu khong thi nhieu cua HAPT lam
@@ -47,6 +47,11 @@ class FallParams:
     laying_confirm: int = 2      # so cua so LAYING lien tiep de chot la te nga (~2.6 s)
     voluntary_guard: int = 4     # sau 1 nhan *_TO_LIE thi LAYING duoc coi la hop le (~5.1 s)
     recover_windows: int = 2     # roi khoi LAYING bao nhieu cua so thi go bao dong
+
+    # Muon te nga thi TRUOC DO phai dang dung/ngoi that su. Mot cua so don le doan
+    # sai thanh SITTING/WALKING ngay giua mot chuoi LAYING khong duoc tinh la "dang o
+    # tu the chua nam". Xem docs/DECISIONS.md muc 1.
+    upright_min: int = 4         # so cua so chua-nam LIEN TIEP toi thieu (~5.1 s)
 
 
 def window_shock_stats(win_acc):
@@ -63,8 +68,8 @@ def window_shock_stats(win_acc):
 def shock_windows(acc, use_median=True):
     """Raw acc (N,3) don vi g -> (a_min, a_max) cho tung cua so.
 
-    use_median=True (mac dinh) loc median 3 truoc: BAT BUOC tren du lieu that,
-    xem docs/DECISIONS.md muc 7.
+    use_median=True (mac dinh) loc median 3 truoc - cung buoc median voi duong dac
+    trung. KHONG loc lowpass o day: kenh soc can giu nguyen dinh va dap.
     """
     a = dsp.median3(acc) if use_median else np.asarray(acc, dtype=np.float64)
     w = dsp.make_windows(a)
@@ -87,6 +92,7 @@ class FallDetector:
         self._timer = 0          # dem nguoc trong SHOCK
         self._laying = 0         # so cua so LAYING lien tiep
         self._recover = 0
+        self._active_run = 0     # so cua so chua-nam LIEN TIEP vua roi
 
     # -- noi bo ------------------------------------------------------------
     def _is_shock(self, a_min, a_max):
@@ -99,10 +105,15 @@ class FallDetector:
         hit = a_max >= p.impact_g
         return (free and hit) if p.shock_rule == 'both' else (free or hit)
 
-    def _abrupt_to_laying(self, label):
-        """Nhay thang tu tu the chua nam sang LAYING ma khong qua nhan transition."""
+    def _abrupt_to_laying(self, label, active_run):
+        """Nhay thang tu tu the chua nam sang LAYING ma khong qua nhan transition.
+
+        active_run = so cua so chua-nam lien tiep ngay truoc cua so nay. Doi it nhat
+        upright_min cua so, neu khong thi mot cua so doan sai don le cung du bao dong.
+        """
         return (label == cfg.LABEL_LAYING
                 and self.prev_label in cfg.LABELS_ACTIVE
+                and active_run >= self.p.upright_min
                 and self._guard == 0)
 
     # -- API ---------------------------------------------------------------
@@ -113,6 +124,8 @@ class FallDetector:
         """
         p = self.p
         event = None
+        active_run = self._active_run          # do dai chuoi chua-nam TRUOC cua so nay
+        self._active_run = active_run + 1 if label in cfg.LABELS_ACTIVE else 0
 
         if self._guard > 0:
             self._guard -= 1
@@ -122,7 +135,7 @@ class FallDetector:
         shock = self._is_shock(a_min, a_max)
 
         if self.state == STATE_IDLE:
-            if shock or self._abrupt_to_laying(label):
+            if shock or self._abrupt_to_laying(label, active_run):
                 self.state = STATE_SHOCK
                 self._timer = p.confirm_windows
                 self._laying = 1 if label == cfg.LABEL_LAYING else 0

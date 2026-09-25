@@ -78,7 +78,7 @@ def load_raw(raw_dir, cache=None, verbose=True):
 def build_features(raw, labels, verbose=True):
     """Loc + cat cua so theo tung doan co nhan, chia train/test theo NGUOI.
 
-    Tra ve (X_train, y_train, X_test, y_test) voi X shape (n, 120).
+    Tra ve (X_train, y_train, X_test, y_test) voi X shape (n, 552).
     """
     X_train, y_train = [], []
     X_test, y_test = [], []
@@ -89,15 +89,15 @@ def build_features(raw, labels, verbose=True):
         if rec is None:
             continue
 
-        acc, bacc, gyro = dsp.preprocess(rec['acc'], rec['gyro'])
-        w_acc = dsp.make_windows(acc[start - 1:end])
-        if w_acc is None:
+        sig = dsp.preprocess(rec['acc'], rec['gyro'])
+        win = {}
+        for name, s in sig.items():
+            win[name] = dsp.make_windows(s[start - 1:end])
+        if win['gravity'] is None:
             continue                       # doan ngan hon 1 cua so -> bo qua
-        w_bacc = dsp.make_windows(bacc[start - 1:end])
-        w_gyro = dsp.make_windows(gyro[start - 1:end])
 
-        X = dsp.extract_features(w_acc, w_bacc, w_gyro)
-        y = np.full(len(w_acc), act_id, dtype=int)
+        X = dsp.extract_features(win)[1]
+        y = np.full(len(X), act_id, dtype=int)
 
         if user_id in cfg.TRAIN_USERS:
             X_train.append(X)

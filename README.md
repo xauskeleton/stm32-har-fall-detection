@@ -13,23 +13,32 @@ chia train/test **theo người** — 21 người để train, 9 người hoàn 
 
 | | |
 |---|---|
-| Accuracy 12 lớp | **86,88%** |
-| macro-F1 | **80,69** |
-| Model | LogisticRegression 120 → 12 |
-| Số tham số | **1.452** (5,7 KB float32) |
-| Thời gian tính 1 cửa sổ | **0,44 ms** trên M4F 180 MHz → **0,034% CPU** |
+| Accuracy 12 lớp | **93,23%** |
+| macro-F1 | **85,81** |
+| F1 4 nhãn chuyển tư thế liên quan đến nằm | **69,16** |
+| Model | LogisticRegression 160 → 12 |
+| Đặc trưng | 516 tính ra, **RFE giữ 160** |
+| Số tham số | **1.932** (7,5 KB float32) |
 | Flash thật đã dùng | **161,7 KB / 512 KB** (31,6%) |
 | RAM thật đã dùng | **~15,2 KB / 128 KB** (11,9%) |
+
+Chia train/test theo **người**, dùng đúng split chính thức của HAPT. Để so các phương án mà
+không chạm vào tập test, dùng cross-validation 7 fold trong tập train: **94,69% ± 1,92**,
+macro-F1 **87,73 ± 2,84**, F1 4 nhãn ngã **75,32 ± 7,01**.
+
+Firmware C đã có đủ trong `firmware/Core/` và đối chiếu với Python trên toàn bộ tập test:
+**0 / 3.156 cửa sổ lệch nhãn**, accuracy giống hệt. Chạy kiểm tra: `make -C firmware test`.
 
 Nhìn theo mức độ mà bộ phát hiện té ngã thực sự dùng (gộp "đi/đứng/ngồi" thành một nhóm):
 
 | Nhóm | Số mẫu | Recall | Precision |
 |---|---|---|---|
-| ACTIVE (đi, đứng, ngồi) | 2.451 | 99,9% | 99,6% |
-| **LAYING** | 545 | **99,8%** | **100,0%** |
-| Nằm xuống (`*_TO_LIE`) | 81 | 92,6% | 96,2% |
-| Đứng dậy (`LIE_TO_*`) | 52 | 90,4% | 97,9% |
-| **Tổng** | **3.162** | **99,43%** | |
+| ACTIVE (đi, đứng, ngồi) | 2.451 | 99,9% | 99,5% |
+| **LAYING** | 545 | **99,1%** | **99,8%** |
+| Ngồi/đứng dậy (`STAND_TO_SIT`, `SIT_TO_STAND`) | 33 | 87,9% | 93,5% |
+| Nằm xuống (`*_TO_LIE`) | 81 | 92,6% | 93,8% |
+| Đứng dậy (`LIE_TO_*`) | 52 | 92,3% | 98,0% |
+| **Tổng (đúng nhóm)** | **3.162** | **99,30%** | |
 
 Báo động té ngã sai, đo trên **toàn bộ 372 phút HAPT** (dữ liệu không chứa té ngã, nên mọi
 báo động đều là báo sai), gồm 118 lần nằm xuống chủ động:
@@ -37,7 +46,7 @@ báo động đều là báo sai), gồm 118 lần nằm xuống chủ động:
 | | Số lần báo sai |
 |---|---|
 | Nếu nhãn hoàn hảo | **0** |
-| Với nhãn thật từ model | **2** (1 lần / 3,1 giờ) |
+| Với nhãn thật từ model | **0** |
 
 > **Giới hạn cần biết:** chưa có mẫu té ngã thật nào để đo tỷ lệ **phát hiện đúng**.
 > Toàn bộ số liệu trên chỉ nói về việc *không báo động sai*. Xem `docs/TODO.md`.
@@ -59,18 +68,23 @@ ICM-20948 @ 50 Hz  →  ax ay az gx gy gz (đơn vị g và rad/s)
  trượt 64 mẫu (overlap 50%)             │
         │                               │
         ▼                               │
- 120 đặc trưng                          │
-  3 nhóm: total_acc, body_acc, gyro     │
-  × 4 kênh: x, y, z, magnitude          │
-  × 10 đặc trưng:                       │
-     thời gian (6) mean std max min RMS MAD
-     tần số (4)   FFT max/mean/energy, meanFreq
+ 516 đặc trưng                          │
+  5 nhóm tín hiệu: body_acc, gravity,   │
+    body_acc_jerk, gyro, gyro_jerk      │
+  + magnitude + phổ FFT (bỏ bin DC)     │
+  × mean std mad max min energy iqr     │
+    entropy arCoeff(Burg-4) correlation │
+    sma skewness kurtosis bandsEnergy   │
+    maxInds meanFreq + 7 góc gravity    │
+        │                               │
+        ▼                               │
+ RFE giữ 160 cột (models/selected.json) │
         │                               │
         ▼                               │
  Chuẩn hoá Z-score (StandardScaler)     │
         │                               │
         ▼                               │
- LogisticRegression 120 × 12 + argmax   │
+ LogisticRegression 160 × 12 + argmax   │
         │                               │
         ▼                               ▼
     nhãn 1..12  ────────────►  State machine phát hiện té ngã
@@ -102,22 +116,27 @@ luôn đi qua `STAND_TO_LIE` / `SIT_TO_LIE`; té ngã thì nhảy thẳng từ `
 ```
 har/                    thư viện Python dùng chung
   config.py             hằng số DSP, 12 nhãn, chia train/test theo người
-  dsp.py                Butterworth SOS, median 3, tách gravity, cắt cửa sổ, 120 đặc trưng
+  dsp.py                median 3, lowpass 20 Hz, tách gravity, jerk, 516 đặc trưng
   dataset.py            đọc HAPT RawData, Phyphox CSV, log UART, ground truth
   fall.py               state machine té ngã (bản tham chiếu của fall_detect.c)
-  model.py              đánh giá, lưu/nạp model
+  model.py              chọn cột + scaler + clf, đánh giá, lưu/nạp bundle
   export_c.py           sinh code C từ model đã huấn luyện
 scripts/
-  train.py              huấn luyện, lưu models/
+  train.py              RFE (chỉ trên người train) + huấn luyện, lưu models/
   eval_fall.py          đo báo động té ngã sai trên toàn bộ HAPT
   export_model.py       sinh firmware/.../model_params.*
-models/                 scaler.pkl, classifier.pkl, meta.json, sweep.json
+models/                 selected.json (160 cột), scaler.pkl, classifier.pkl, meta.json
 firmware/               sinh tự động — KHÔNG sửa tay
   Core/Inc/model_params.h    hằng số, ngưỡng, khai báo extern
-  Core/Src/model_params.c    hệ số biquad, scaler, ma trận 12×120
-  test/golden_vectors.h      dữ liệu đối chiếu C vs Python
+  Core/Src/model_params.c    biquad, ZI, HAR_BANDS, HAR_SELECTED, scaler, ma trận 12×160
+  Core/Src/har_dsp.c         median 3, cascade biquad, FFT 128, 14 phép thống kê   (viết tay)
+  Core/Src/har_features.c    516 đặc trưng                                         (viết tay)
+  Core/Src/har_classifier.c  chọn cột + chuẩn hoá + nhân ma trận + argmax          (viết tay)
+  Core/Src/har_pipeline.c    ring buffer, chạy mỗi 64 mẫu mới                      (viết tay)
+  Core/Src/fall_detect.c     bản sao của har/fall.py                               (viết tay)
+  test/test_parity.c         đối chiếu C vs Python, make -C firmware test          (viết tay)
 docs/
-  DECISIONS.md          10 mục — số liệu chứng minh từng quyết định kỹ thuật
+  DECISIONS.md          số liệu chứng minh từng quyết định kỹ thuật
   HARDWARE.md           phần cứng thực tế: clock, cảm biến, flash/RAM đo từ build
   TODO.md               việc còn lại và câu hỏi còn treo
 ```
@@ -132,7 +151,8 @@ Model đã huấn luyện sẵn nằm trong `models/`, dùng được ngay khôn
 
 ## Dữ liệu
 
-Repo **không** chứa HAPT dataset (409 MB). Chỉ cần nếu muốn huấn luyện lại:
+Repo **không** chứa HAPT dataset. Chỉ cần nếu muốn huấn luyện lại — tải thư mục `RawData/`
+từ [bản gốc trên UCI](https://archive.ics.uci.edu/dataset/341/):
 
 ```bash
 export HAPT_RAWDATA=/đường/dẫn/tới/RawData
@@ -141,6 +161,13 @@ python scripts/train.py --data /đường/dẫn/tới/RawData
 ```
 
 `har.dataset.find_rawdata()` tự dò các vị trí quen thuộc.
+
+**Phải dùng đúng bản gốc.** Có những bản HAPT lưu hành đã bị cộng nhiễu để làm bài tập khử
+nhiễu; huấn luyện trên bản đó mất ~6% accuracy mà không báo lỗi gì. Dấu hiệu: giá trị ghi 16
+chữ số liên tục (dữ liệu thật bị lượng tử hoá 1/720 g) và std dư khi đứng yên ~0,29 g thay vì
+~0,022 g. Xem `docs/DECISIONS.md` mục 0.
+
+Nếu đổi dữ liệu thì **xoá `data_raw/hapt_raw.npz`** — cache giữ tín hiệu cũ.
 
 ## Lệnh hay dùng
 
@@ -158,9 +185,8 @@ python scripts/export_model.py
 python scripts/train.py --cache hapt_raw.npz
 ```
 
-Code cố định vào đúng cấu hình đã chốt — không còn cờ bật/tắt để thí nghiệm. Các script
-so sánh cấu hình (5 bộ đặc trưng × 8 model) đã gỡ sau khi chốt xong; số liệu còn nguyên trong
-`docs/DECISIONS.md` và `models/sweep.json`, code ở commit `8174182` nếu cần chạy lại.
+Code cố định vào đúng cấu hình đã chốt — không còn cờ bật/tắt để thí nghiệm. Số liệu của các
+bảng so sánh (19 model, 11 cấu hình đặc trưng, 7 mức RFE) nằm trong `docs/DECISIONS.md`.
 
 **Chạy lại `export_model.py` sau mỗi lần `train.py`** — nếu quên thì firmware dùng trọng số cũ
 mà không báo lỗi gì.
@@ -169,17 +195,21 @@ mà không báo lỗi gì.
 
 Mỗi quyết định đều có số liệu chứng minh trong `docs/DECISIONS.md`:
 
-1. **Bỏ Butterworth lowpass 20 Hz** — chỉ đóng góp ~0,5% accuracy, có trường hợp còn làm tệ hơn
-2. **Giữ tách gravity 0,3 Hz** — không phải khử nhiễu mà là tách tín hiệu, đem lại +0,92%
-3. **LogisticRegression, không phải mạng nơ-ron** — thắng mọi model khác, kể cả SVM RBF và
-   Random Forest, trong khi nhỏ hơn 200 lần
-4. **Lọc causal, không dùng `filtfilt`** — `filtfilt` không chạy real-time được, và đo thực tế
+1. **Phát hiện té ngã từ nhãn đầu ra** của bộ phân loại 12 lớp, không thêm lớp thứ 13, không
+   dùng dataset té ngã ngoài để huấn luyện. Nằm xuống chủ động luôn đi qua `*_TO_LIE`; té ngã
+   nhảy thẳng từ `WALKING`/`STANDING` sang `LAYING`, kèm sốc gia tốc
+2. **LogisticRegression, không phải mạng nơ-ron** — quét 19 cấu hình. XGBoost 200×d4 vừa flash
+   (225 KB) và hơn ở F1 té ngã, nhưng **đặc trưng quan trọng hơn model**: logreg + bộ đặc trưng
+   tốt hơn thắng cả XGBoost + bộ đặc trưng cũ, mà vẫn 7,5 KB và giải thích được trong một câu
+3. **Tính 516 đặc trưng, RFE giữ 160** — cắt bớt làm model TỐT HƠN: dùng cả 516 cho 73,33 F1 ngã, giữ 160 cho 75,32.
+   Khác biệt nằm ở *đặc trưng nào*, không phải *bao nhiêu*
+4. **Bỏ Butterworth lowpass 20 Hz, giữ tách gravity 0,3 Hz** — lowpass thắng 3/7 fold, không đủ
+   bằng chứng; tách gravity thì bỏ đi mất 2,26 macro-F1
+5. **Lọc causal, không dùng `filtfilt`** — `filtfilt` không chạy real-time được, và đo thực tế
    causal không hề kém hơn
-5. **Phát hiện té ngã từ nhãn đầu ra**, không thêm lớp thứ 13, không dùng dataset té ngã ngoài
-6. **Lọc median 3 cho kênh phát hiện sốc** — nhiễu gia tốc kế làm 12,9% cửa sổ tư thế tĩnh bị
-   coi là té ngã; median 3 đưa về 0,0%
-7. **float32, không quantize int8** — Cortex-M4F có FPU cứng nên int8 không nhanh hơn, mà còn
-   làm 0,368% cửa sổ sai nhãn
+6. **float32, không quantize int8** — và bản C đã đối chiếu 0/3.162 cửa sổ lệch nhãn. int8 làm 0,063% cửa sổ sai nhãn
+7. **So các phương án bằng cross-validation trong tập train**, không bằng một lần đọc tập test.
+   Độ lệch giữa người là ±2…3% nên chỉ ≥ 6/7 fold mới coi là bằng chứng
 
 ## Trạng thái
 
@@ -188,5 +218,6 @@ Phần Python xong và đã đo đạc đầy đủ. Tham số model đã xuất
 Firmware STM32CubeIDE đã có ở branch `Embeded_System` và **đã build được**: flash
 161,7 KB / 512 KB, RAM ~15,2 KB / 128 KB. Thông số phần cứng thật ở `docs/HARDWARE.md`.
 
-Hai việc còn lại trước khi firmware chạy đúng: hoán vị trục cảm biến, và huấn luyện lại
-model bằng chính `har/dsp.py` của repo — xem `docs/TODO.md`.
+Việc còn lại trước khi firmware chạy đúng: hoán vị trục cảm biến, kẹp tín hiệu cho kênh phân
+loại (HAPT bão hoà ở 2 g / 573 °/s nhưng board thì không), và cài các phép còn thiếu trong C
+(`arCoeff` Burg-4, `entropy` 256 ô, `bandsEnergy`) — xem `docs/TODO.md`.

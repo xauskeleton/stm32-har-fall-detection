@@ -18,13 +18,12 @@ import os
 import sys
 from collections import Counter
 
-import joblib
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from har import config as cfg
-from har import dataset, dsp, fall
+from har import dataset, dsp, fall, model as har_model
 
 
 def window_labels(labels, exp_id, user_id, n_win):
@@ -37,11 +36,11 @@ def window_labels(labels, exp_id, user_id, n_win):
     return out
 
 
-def run_experiment(rec, labels, key, scaler, clf, params):
+def run_experiment(rec, labels, key, scaler, clf, cols, params):
     X = dsp.pipeline(rec['acc'], rec['gyro'])
     if X is None:
         return None
-    pred = clf.predict(scaler.transform(X))
+    pred = har_model.predict(scaler, clf, cols, X)
     truth = window_labels(labels, key[0], key[1], len(X))
 
     out = {'n_win': len(X), 'truth': truth, 'pred': pred,
@@ -60,8 +59,7 @@ def main():
     ap.add_argument('--rule', default=None, choices=['both', 'any', 'labels'])
     args = ap.parse_args()
 
-    scaler = joblib.load(os.path.join(args.models, 'scaler.pkl'))
-    clf = joblib.load(os.path.join(args.models, 'classifier.pkl'))
+    scaler, clf, cols, _ = har_model.load_bundle(args.models)
     params = fall.FallParams(shock_rule=args.rule) if args.rule else fall.FallParams()
 
     try:
@@ -71,7 +69,7 @@ def main():
     raw, labels = dataset.load_raw(raw_dir, cache=args.cache)
     results = []
     for key in sorted(raw):
-        r = run_experiment(raw[key], labels, key, scaler, clf, params)
+        r = run_experiment(raw[key], labels, key, scaler, clf, cols, params)
         if r is not None:
             results.append(r)
 

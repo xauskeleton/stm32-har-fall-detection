@@ -30,9 +30,28 @@ Firmware nằm ở branch `Embeded_System` (do Quang dựng bằng STM32CubeIDE)
 | Từ kế AK09916 | **không dùng** (HAPT không có từ kế) | — |
 | Chuyển bank thanh ghi | đã xử lý (`ICM20948_ChangeUserBank`) | `icm20948.c:68` |
 
-Hai thang đo này **đúng** — đã kiểm chứng trên dữ liệu HAPT: ±4 g và ±1000 °/s cho
-**0 mẫu bị cắt ngọn**, trong khi ±2 g cắt 0,16% và ±500 °/s cắt 0,0026% (dữ liệu HAPT
-lên tới 3,08 g và 629 °/s).
+Hai thang đo này **đúng**, nhưng lý lẽ trong các bản trước của tài liệu này thì **sai**.
+Bản trước ghi "dữ liệu HAPT lên tới 3,08 g và 629 °/s" — hai con số đó đo trên bản HAPT đã bị
+cộng nhiễu σ ≈ 0,30. Trên bản gốc, đỉnh chỉ là **2,010 g** và **573,4 °/s**.
+
+Quan trọng hơn: **HAPT đã bị bão hoà ngay từ điện thoại.** Giá trị `2,009722 g` lặp lại y hệt
+11 lần và `10,008416 rad/s` (= 573,0 °/s) lặp lại 24 lần, trên cả 3 trục, tại đúng mốc tròn
+2 g và 10 rad/s — Galaxy S II được đặt ở ±2 g / ±10 rad/s, và HAPT chứa **42 mẫu acc + 41 mẫu
+gyro bị cắt ngọn thật**. Nghĩa là HAPT **không cho biết đỉnh thật** của chuyển động người,
+nên "0 mẫu bị cắt ngọn ở ±4 g" là điều hiển nhiên chứ không phải bằng chứng.
+
+Lý lẽ đúng cho ±4 g / ±1000 °/s:
+
+| | lý do |
+|---|---|
+| **acc ±4 g** | ±2 g **dùng không được**: ngưỡng va đập của bộ phát hiện té ngã là **2,0 g**, cảm biến bão hoà ở 2 g thì không bao giờ báo được "> 2 g" → nhánh sốc chết hẳn. Té ngã ở thắt lưng thường 3–6 g |
+| **gyro ±1000 °/s** | ngay trên dữ liệu **đã bị cắt ở 573 °/s** mà ±500 vẫn cắt 88 mẫu; đỉnh thật còn cao hơn |
+| **không cần thang nhỏ hơn** | 16 bit cho 0,00012 g/LSB và 0,031 °/s/LSB, trong khi sàn nhiễu ICM-20948 ~0,0016 g và ~0,1 °/s ở 50 Hz — **nhiễu lớn hơn bước lượng tử hơn 10 lần**. Hạ thang đo không đo thêm được gì, chỉ mất khoảng dự trữ |
+
+**Hệ quả phải xử lý trong firmware:** model train trên dữ liệu cắt ở 2 g / 10 rad/s, còn board
+ở ±4 g / ±1000 dps sẽ báo giá trị vượt hai mốc đó. Nên **kẹp** acc vào ±2,0 g và gyro vào
+±10 rad/s **cho kênh đặc trưng phân loại**, còn kênh phát hiện sốc dùng giá trị **không kẹp**
+vì nó cần biết > 2 g.
 
 > **Cần kiểm tra:** `main.c` ghi kèm bit `ACCEL_FCHOICE` / `GYRO_FCHOICE`, tức bật bộ
 > lọc thông thấp trên chip (DLPF), còn các bit `DLPFCFG` để mặc định 0. Cần đối chiếu
@@ -76,7 +95,7 @@ Chi tiết RAM: `.bss` 13,5 KB + `.data` 160 B + heap 512 B + stack 1 KB
 | File | Flash | Ghi chú |
 |---|---|---|
 | `arm_common_tables.o` | **117,0 KB** | **bảng tra FFT của CMSIS-DSP** |
-| `model_params.o` | 6,8 KB | toàn bộ model: scaler + ma trận 12×120 + bias |
+| `model_params.o` | 6,8 KB | model cũ (12×120). Bản 160 đặc trưng: **~9,3 KB** |
 | `arm_cfft_f32.o` | 4,4 KB | |
 | `stm32f4xx_hal_i2c.o` | 4,1 KB | |
 | `arm_cfft_radix8_f32.o` | 4,0 KB | |
@@ -143,14 +162,18 @@ tệ nhất 4,3%.
 
 ## Thời gian tính toán
 
-Chưa đo trên board. Ước lượng phân tích: ~62.500 phép + 1.176 phép `sqrt` mỗi cửa sổ,
-tương đương ~0,44 ms ở 180 MHz. Nhưng `calc_median` trong `har_dsp.c` dùng insertion sort
-O(N²) và được gọi 2 lần mỗi kênh × 12 kênh, nên thực tế có thể lên **~5 ms**.
+Chưa đo trên board, và **chưa có ước lượng cho bộ 552 đặc trưng**.
 
-Ngân sách là **1.280 ms** (cứ 64 mẫu mới mới phân loại một lần), nên kể cả 5 ms vẫn chỉ
-chiếm **0,4% CPU**. Không phải vấn đề.
+Con số cũ (~0,44 ms, có thể lên ~5 ms vì `calc_median` dùng insertion sort O(N²)) là cho bộ
+120 đặc trưng. Bộ mới nặng hơn — phần đắt nhất là `entropy` (33 kênh) và sắp xếp cho `iqr`,
+còn `arCoeff` Burg-4 (20 kênh) thì rẻ hơn cả FFT.
 
-Cần đo thật bằng `DWT->CYCCNT` khi có board.
+Ngân sách là **1.280 ms** (cứ 64 mẫu mới mới phân loại một lần). Ngay cả khi bộ mới đắt gấp
+10 lần bộ cũ thì vẫn dưới **4% CPU**, nên đây không phải rủi ro — nhưng **phải đo thật** bằng
+`DWT->CYCCNT` khi có board, đừng ghi số ước lượng vào báo cáo.
+
+RAM: buffer tín hiệu cho 5 nhóm × 3 trục × 128 mẫu × 4 byte = **7,5 KB**, cộng ~1 KB cho Burg
+và ~1 KB scratch FFT. Tổng RAM dự kiến ~20 KB / 128 KB.
 
 ## Toolchain
 
