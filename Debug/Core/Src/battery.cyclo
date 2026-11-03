@@ -1,0 +1,9 @@
+../Core/Src/battery.c:19:6:Battery_Init	1
+../Core/Src/battery.c:49:17:read_adc	1
+../Core/Src/battery.c:57:14:read_battery_voltage	1
+../Core/Src/battery.c:64:16:voltage_to_percent	3
+../Core/Src/battery.c:72:13:show_leds	2
+../Core/Src/battery.c:81:6:Battery_Update	10
+../Core/Src/battery.c:125:10:Battery_GetMillivolts	1
+../Core/Src/battery.c:130:9:Battery_GetPercent	1
+../Core/Src/battery.c:135:6:Battery_IsPresent	1

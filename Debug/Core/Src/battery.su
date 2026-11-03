@@ -1,0 +1,9 @@
+../Core/Src/battery.c:19:6:Battery_Init	56	static
+../Core/Src/battery.c:49:17:read_adc	8	static
+../Core/Src/battery.c:57:14:read_battery_voltage	16	static
+../Core/Src/battery.c:64:16:voltage_to_percent	16	static
+../Core/Src/battery.c:72:13:show_leds	24	static
+../Core/Src/battery.c:81:6:Battery_Update	16	static
+../Core/Src/battery.c:125:10:Battery_GetMillivolts	4	static
+../Core/Src/battery.c:130:9:Battery_GetPercent	4	static
+../Core/Src/battery.c:135:6:Battery_IsPresent	4	static

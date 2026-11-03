@@ -1,3 +1,9 @@
+
+
+
+
+
+
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
@@ -26,6 +32,7 @@
 #include "har_dsp.h"
 #include "har_model.h"
 #include "fall_detect.h"
+#include "battery.h"
 #include <stdio.h>
 /* USER CODE END Includes */
 
@@ -113,6 +120,7 @@ int main(void)
   MX_I2C1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  Battery_Init();
   DSP_Init();
   AI_Init();
   Fall_Init(NULL);
@@ -124,8 +132,7 @@ int main(void)
       ICM20948_WriteRegister(&ICM20948_REG_GYRO_CONFIG_1, ICM20948_GYRO_FCHOICE | ICM20948_GYRO_FS_SEL_1000);
       i2c_ok = 1;
   } else {
-      // Bật PC4 (Kéo LOW) nếu khởi tạo I2C thất bại
-      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);
+      printf("Loi: khong ket noi duoc IMU qua I2C\r\n");
   }
   AK09916_Init(AK09916_CNTL2_CONT_MEASURE_2);
 
@@ -139,6 +146,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    Battery_Update();
+
     static uint32_t last_uart_time = 0;
     static float cur_ax = 0.0f, cur_ay = 0.0f, cur_az = 0.0f;
     if (HAL_GetTick() - last_uart_time >= 2000) {
@@ -151,6 +160,11 @@ int main(void)
              (cur_ax < 0.0f && ax_i == 0) ? "-" : "", ax_i, ax_f,
              (cur_ay < 0.0f && ay_i == 0) ? "-" : "", ay_i, ay_f,
              (cur_az < 0.0f && az_i == 0) ? "-" : "", az_i, az_f);
+      if (Battery_IsPresent()) {
+        printf("Pin: %u%% (%lu mV)\r\n", Battery_GetPercent(), Battery_GetMillivolts());
+      } else {
+        printf("Pin: khong co pin (dang cap nguon USB)\r\n");
+      }
     }
 
     if (flag_sample_imu) {
@@ -191,17 +205,6 @@ int main(void)
 
         win_a_min = 100.0f;
         win_a_max = 0.0f;
-
-        FallState_t state = Fall_GetState();
-        if (state == FALL_STATE_IDLE) {
-          HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
-          HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2 | GPIO_PIN_3, GPIO_PIN_SET);
-        } else if (state == FALL_STATE_SHOCK) {
-          HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1 | GPIO_PIN_2, GPIO_PIN_RESET);
-          HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
-        } else if (state == FALL_STATE_FALLEN) {
-          HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3, GPIO_PIN_RESET);
-        }
       }
     }
   }
