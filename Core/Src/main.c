@@ -26,6 +26,7 @@
 #include "har_dsp.h"
 #include "har_model.h"
 #include "fall_detect.h"
+#include "buzzer.h"
 #include <stdio.h>
 /* USER CODE END Includes */
 
@@ -36,6 +37,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+// 1 = còi kêu ngay khi cấp nguồn để thử dây (nhấn KEY1 để tắt). Thử xong đổi về 0.
+#define BUZZER_TEST_ON_BOOT  1
 
 /* USER CODE END PD */
 
@@ -113,6 +116,10 @@ int main(void)
   MX_I2C1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  Buzzer_Init();
+#if BUZZER_TEST_ON_BOOT
+  Buzzer_Start();
+#endif
   DSP_Init();
   AI_Init();
   Fall_Init(NULL);
@@ -139,6 +146,16 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    Buzzer_Update();
+
+    // KEY1 (PC9, nhấn = 0): tắt còi hú khi đang báo té ngã
+    static uint8_t key1_prev = 1;
+    uint8_t key1 = (uint8_t)HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_9);
+    if (key1 == 0 && key1_prev == 1) {
+      Buzzer_Stop();
+    }
+    key1_prev = key1;
+
     static uint32_t last_uart_time = 0;
     static float cur_ax = 0.0f, cur_ay = 0.0f, cur_az = 0.0f;
     if (HAL_GetTick() - last_uart_time >= 2000) {
@@ -187,10 +204,16 @@ int main(void)
         AI_Predict(features_buf, &ai_pred);
 
         FallEvent_t event = Fall_Update(ai_pred.predicted_class, win_a_min, win_a_max);
-        (void)event;
 
         win_a_min = 100.0f;
         win_a_max = 0.0f;
+
+        // Còi chỉ kêu khi xác nhận té ngã, tự tắt khi người dùng đứng dậy
+        if (event == FALL_EVENT_DETECTED) {
+          Buzzer_Start();
+        } else if (event == FALL_EVENT_RECOVERED) {
+          Buzzer_Stop();
+        }
 
         FallState_t state = Fall_GetState();
         if (state == FALL_STATE_IDLE) {

@@ -1,3 +1,4 @@
+"./Core/Src/buzzer.o"
 "./Core/Src/fall_detect.o"
 "./Core/Src/har_dsp.o"
 "./Core/Src/har_model.o"

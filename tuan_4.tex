@@ -1,0 +1,213 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[T5]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[vietnamese]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{STM32-HAR-FALL-DETECTION}
+\rhead{Báo cáo tuần 4}
+\cfoot{\thepage}
+
+\definecolor{codebg}{gray}{0.96}
+\lstset{
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{blue},
+  commentstyle=\color{teal},
+  stringstyle=\color{orange},
+  numbers=left, numberstyle=\tiny, numbersep=5pt,
+  frame=single, breaklines=true, language=Python, tabsize=4,
+  showstringspaces=false, aboveskip=2pt, belowskip=0pt
+}
+\renewcommand{\lstlistingname}{Đoạn mã}
+
+\newcommand{\dien}[1]{\textcolor{red}{CẦN ĐIỀN: #1}}
+\newcommand{\ds}{\textcolor{red}{\dots}}
+\newcommand{\hinhgiuCho}[2]{%
+  \begin{center}
+  \fbox{\parbox[c][#1][c]{0.9\textwidth}{\centering\textcolor{gray}{#2}}}
+  \end{center}}
+
+\begin{document}
+
+% ================= TRANG BÌA =================
+\begin{titlepage}
+  \centering
+  \vspace*{0.8cm}
+  {\large \textbf{ĐẠI HỌC QUỐC GIA HÀ NỘI}}\\
+  {\large \textbf{TRƯỜNG ĐẠI HỌC CÔNG NGHỆ}}\\[2cm]
+  \includegraphics[width=3cm]{logo.png}
+
+  \vspace{0.6cm}
+
+  {\Huge \bfseries BÁO CÁO TIẾN ĐỘ TUẦN 4}\\[0.8cm]
+  {\Large Phân tích HAPT Dataset và cắt cửa sổ dữ liệu}\\[2cm]
+
+  {\large \textbf{STM32-HAR-FALL-DETECTION}}\\[2.5cm]
+
+  \begin{tabular}{rl}
+    \textbf{Nhóm thực hiện:} & Nhóm 15 \\[4pt]
+    \textbf{Thành viên:} & Nguyễn Hữu Quang -- MSSV: 24020620 \\
+     & Nguyễn Trọng Nhân -- MSSV: 24020596 \\
+     & Phan Văn Thuận -- MSSV: 24020660 \\[4pt]
+    \textbf{Lớp:} & ELT3240 2 \\[4pt]
+    \textbf{Người hướng dẫn:} & ThS. Phạm Đình Tuân \\[4pt]
+    \textbf{Thời gian báo cáo:} & Tuần 4 / 10, 20 tháng 10 \\
+  \end{tabular}
+
+  \vfill
+  {\large Hà Nội, tháng 10 năm 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ================= 1 =================
+\section{Mục tiêu tuần 4}
+Ở tuần 3, nhóm đã lấy mẫu cảm biến ICM-20948 đúng nhịp 50\,Hz bằng Timer ngắt. Từ tuần 4, dự án bước sang Giai đoạn 2 là xây dựng mô hình học máy trên máy tính, dùng HAPT Dataset có cùng tần số 50\,Hz. Mục tiêu của tuần 4 gồm:
+\begin{itemize}[leftmargin=*, itemsep=0pt]
+  \item Tìm hiểu cấu trúc HAPT Dataset và đọc dữ liệu, nhãn bằng Python.
+  \item Cắt dữ liệu thành cửa sổ 128 mẫu (2.56\,s), độ trượt 64 mẫu (chồng lấp 50\%) và gán nhãn cho từng cửa sổ.
+  \item Trích xuất một số đặc trưng thống kê đơn giản và chia dữ liệu theo người để dùng ở tuần 5.
+\end{itemize}
+
+% ================= 2 =================
+\section{Đối chiếu với kế hoạch 10 tuần}
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}p{1.3cm}p{8cm}p{3.5cm}@{}}
+\toprule
+\textbf{Tuần} & \textbf{Nội dung theo kế hoạch} & \textbf{Trạng thái} \\
+\midrule
+1  & Làm quen STM32CubeIDE: chớp tắt LED, UART & Hoàn thành \\
+2  & Giao tiếp ICM-20948: đọc Accel \& Gyro RAW qua I2C & Hoàn thành \\
+3  & Timer ngắt chuẩn 20\,ms tương ứng 50\,Hz & Hoàn thành \\
+\textbf{4} & \textbf{Phân tích HAPT Dataset, cắt cửa sổ 128 mẫu, 50\% overlap} & \textbf{Báo cáo tuần này} \\
+5  & Huấn luyện mô hình trên PC & Kế hoạch \\
+6  & Chuyển mô hình sang mã C & Kế hoạch \\
+7  & Chạy thử mô hình trên chip với dummy data & Kế hoạch \\
+8  & Ghép cảm biến + AI, vòng lặp lấy mẫu 20\,ms & Kế hoạch \\
+9  & Logic cảnh báo té ngã & Kế hoạch \\
+10 & Kiểm thử, đo độ trễ, đóng gói, báo cáo & Kế hoạch \\
+\bottomrule
+\end{tabular}
+\caption{Tiến độ tổng thể của dự án.}
+\end{table}
+
+% ================= 3 =================
+\section{Phần cứng và công cụ sử dụng}
+Tuần 4 làm việc trên máy tính, phần cứng giữ nguyên như tuần 3 (vi điều khiển STM32F446RET6 và cảm biến ICM-20948 trên board). Phần mềm gồm Python \dien{phiên bản} với NumPy, pandas, Matplotlib và HAPT Dataset từ UCI Machine Learning Repository.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.45\textwidth]{PCB_description.jpg}
+\caption{Board STM32F446RET6 tích hợp cảm biến IMU.}
+\end{figure}
+
+% ================= 4 =================
+\section{Cơ sở lý thuyết}
+\textbf{HAPT Dataset.}
+\begin{itemize}[leftmargin=*, itemsep=0pt]
+  \item 30 người đeo điện thoại ở eo, ghi gia tốc 3 trục theo đơn vị $g$ và vận tốc góc 3 trục theo đơn vị rad/s, tần số 50\,Hz.
+  \item Mỗi lần thu có 2 tệp \texttt{acc\_*.txt} và \texttt{gyro\_*.txt}. Tệp \texttt{labels.txt} ghi từng đoạn có nhãn gồm lần thu, người, mã hoạt động, mẫu đầu và mẫu cuối.
+  \item Dữ liệu ICM-20948 ở tuần 3 là giá trị RAW, cần đổi sang $g$ và rad/s để dùng chung với HAPT.
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}cl@{\hspace{1cm}}cl@{}}
+\toprule
+\multicolumn{2}{c}{\textbf{Hoạt động cơ bản}} & \multicolumn{2}{c}{\textbf{Chuyển tư thế}} \\
+\midrule
+1 & Đi bộ          & 7  & Đứng $\to$ ngồi \\
+2 & Lên cầu thang  & 8  & Ngồi $\to$ đứng \\
+3 & Xuống cầu thang & 9  & Ngồi $\to$ nằm \\
+4 & Ngồi           & 10 & Nằm $\to$ ngồi \\
+5 & Đứng           & 11 & Đứng $\to$ nằm \\
+6 & Nằm            & 12 & Nằm $\to$ đứng \\
+\bottomrule
+\end{tabular}
+\caption{12 lớp hoạt động của HAPT.}
+\end{table}
+
+\textbf{Cửa sổ trượt.} Mỗi cửa sổ dài $W = 128$ mẫu, tương ứng 2,56\,s. Độ trượt $S = 64$ mẫu nên hai cửa sổ liền kề chồng lấp 50\%. Cửa sổ được cắt \emph{bên trong từng đoạn có nhãn} nên mỗi cửa sổ chỉ chứa một hoạt động, nhãn là nhãn của đoạn. Đoạn dài $N$ mẫu cho
+\begin{equation}
+  N_w = \left\lfloor \frac{N - W}{S} \right\rfloor + 1
+\end{equation}
+cửa sổ; đoạn ngắn hơn 128 mẫu bị bỏ.
+
+\textbf{Chia theo người.} Các cửa sổ chồng lấp của cùng một người rất giống nhau, chia ngẫu nhiên theo cửa sổ sẽ cho độ chính xác cao giả tạo. Nhóm dùng cách chia chuẩn của HAPT: 21 người dùng để huấn luyện, 9 người còn lại là người số 2, 4, 9, 10, 12, 13, 18, 20 và 24 dùng để kiểm tra.
+
+% ================= 5 =================
+\section{Quá trình thực hiện}
+Nhóm tải HAPT Dataset từ UCI và dùng thư mục \texttt{RawData}, gồm 61 lần thu của 30 người. Với mỗi lần thu, hai tệp gia tốc và vận tốc góc được đọc thành hai ma trận $N \times 3$. Tệp \texttt{labels.txt} có 1\,214 dòng, mỗi dòng là một đoạn liên tục cùng một hoạt động; các mẫu nằm ngoài mọi đoạn là lúc chuyển tiếp không được gán nhãn nên bị bỏ qua.
+
+Với từng đoạn có nhãn, nhóm lấy phần tín hiệu tương ứng rồi trượt cửa sổ 128 mẫu, mỗi bước 64 mẫu. Chỉ số mẫu trong tệp nhãn đếm từ 1 nên phải lùi 1 khi cắt. Cách cắt trong từng đoạn đảm bảo không có cửa sổ nào lẫn hai hoạt động. Đoạn ngắn hơn 128 mẫu không đủ một cửa sổ nên bị loại. Điều này chỉ xảy ra ở các lớp chuyển tư thế, với 40 trên tổng số 358 đoạn.
+
+Mỗi cửa sổ được xếp vào tập huấn luyện hay tập kiểm tra tùy theo người thu. Để kiểm chứng, nhóm đếm số cửa sổ theo từng lớp và so tổng với công thức $N_w$ áp dụng trên độ dài các đoạn trong \texttt{labels.txt}: hai cách cho cùng kết quả.
+
+% ================= 6 =================
+\section{Kết quả}
+Thu được 10\,929 cửa sổ, mỗi cửa sổ kích thước $128 \times 6$: 7\,767 cửa sổ huấn luyện từ 21 người và 3\,162 cửa sổ kiểm tra từ 9 người.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}clrr@{\hspace{0.8cm}}clrr@{}}
+\toprule
+\textbf{Mã} & \textbf{Lớp} & \textbf{Huấn luyện} & \textbf{Kiểm tra} &
+\textbf{Mã} & \textbf{Lớp} & \textbf{Huấn luyện} & \textbf{Kiểm tra} \\
+\midrule
+1 & Đi bộ           & 1\,226 & 496 & 7  & Đứng $\to$ ngồi & 47 & 23 \\
+2 & Lên cầu thang   & 1\,073 & 471 & 8  & Ngồi $\to$ đứng & 23 & 10 \\
+3 & Xuống cầu thang & 987    & 420 & 9  & Ngồi $\to$ nằm  & 75 & 32 \\
+4 & Ngồi            & 1\,293 & 508 & 10 & Nằm $\to$ ngồi  & 60 & 25 \\
+5 & Đứng            & 1\,423 & 556 & 11 & Đứng $\to$ nằm  & 90 & 49 \\
+6 & Nằm             & 1\,413 & 545 & 12 & Nằm $\to$ đứng  & 57 & 27 \\
+\midrule
+  & Tổng            & 7\,415 & 2\,996 &  & Tổng          & 352 & 166 \\
+\bottomrule
+\end{tabular}
+\caption{Số cửa sổ theo lớp.}
+\end{table}
+
+\textbf{Nhận xét:} dữ liệu mất cân bằng mạnh. Sáu lớp chuyển tư thế chỉ chiếm 4,7\% số cửa sổ; ít nhất là \textit{Ngồi $\to$ đứng} với 33 cửa sổ, vì động tác này trung bình chỉ dài 2,6\,s và 29 trên 62 đoạn bị loại do ngắn hơn một cửa sổ. Khi huấn luyện ở tuần 5 cần theo dõi độ chính xác riêng của từng lớp chứ không chỉ độ chính xác tổng, vì các lớp chuyển sang nằm lại quan trọng nhất cho phát hiện té ngã.
+
+% ================= 7 =================
+\section{Kết luận và kế hoạch tuần 5}
+Tuần 4 đã đọc được HAPT, cắt cửa sổ 128 mẫu với độ trượt 64 mẫu, và chia tập theo người với 21 người huấn luyện, 9 người kiểm tra.
+
+Tuần 5:
+\begin{itemize}[leftmargin=*, itemsep=0pt]
+  \item Trích đặc trưng miền thời gian và miền tần số cho từng cửa sổ.
+  \item Huấn luyện và so sánh các mô hình học máy cổ điển như Logistic Regression, SVM và Random Forest trên tập kiểm tra 9 người.
+  \item Chọn mô hình nhỏ đủ chạy trên STM32F446 để xuất trọng số sang mã C ở tuần 6.
+\end{itemize}
+
+\section*{Tài liệu tham khảo}
+\addcontentsline{toc}{section}{Tài liệu tham khảo}
+\begin{enumerate}[label={\arabic*.}, leftmargin=*, itemsep=0pt]
+  \item Reyes-Ortiz J. L., Oneto L., Samà A., Parra X. và Anguita D., \textit{Transition-Aware Human Activity Recognition Using Smartphones}, Neurocomputing, 2016.
+  \item UCI Machine Learning Repository, \textit{Smartphone-Based Recognition of Human Activities and Postural Transitions Data Set}.
+  \item Trung Nguyen, \textit{micro\_ros\_firmware}, schematic, GitHub repository: \url{https://github.com/trungnguyen0503/micro_ros_firmware}
+\end{enumerate}
+
+\end{document}
+/

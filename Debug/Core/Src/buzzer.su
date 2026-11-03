@@ -1,0 +1,6 @@
+../Core/Src/buzzer.c:31:13:set_output	16	static
+../Core/Src/buzzer.c:43:6:Buzzer_Init	40	static
+../Core/Src/buzzer.c:68:6:Buzzer_Start	8	static
+../Core/Src/buzzer.c:76:6:Buzzer_Stop	8	static
+../Core/Src/buzzer.c:82:6:Buzzer_Update	16	static
+../Core/Src/buzzer.c:98:6:Buzzer_IsOn	4	static
