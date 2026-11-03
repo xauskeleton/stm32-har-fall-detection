@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-// Còi gắn ngoài ở PA8 (TIM1_CH1, chân A8 hàng header trên), nối qua transistor NPN.
+// Còi chủ động gắn ngoài ở PA8 (chân A8 hàng header trên): chân + vào A8, chân − vào G.
 // Chỉ kêu khi phát hiện té ngã, theo nhịp "tít tít tèèè — nghỉ" lặp lại.
 void Buzzer_Init(void);
 void Buzzer_Start(void);
