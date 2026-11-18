@@ -9,7 +9,8 @@ CC      := gcc
 CFLAGS  := -std=c99 -O2 -Wall -Wextra -Wdouble-promotion -I Core/Inc -I test            -DHAR_AXIS_PERMUTE=0
 LDLIBS  := -lm
 SRC     := Core/Src/model_params.c Core/Src/har_dsp.c Core/Src/har_features.c \
-           Core/Src/har_classifier.c Core/Src/har_pipeline.c Core/Src/fall_detect.c
+           Core/Src/har_classifier.c Core/Src/har_pipeline.c Core/Src/fall_detect.c \
+           Core/Src/har_app.c
 BIN     := build/test_parity
 
 .PHONY: test clean

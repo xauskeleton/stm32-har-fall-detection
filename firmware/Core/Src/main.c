@@ -23,6 +23,11 @@
 /* USER CODE BEGIN Includes */
 #include "icm20948.h"
 #include "har_app.h"
+#include "board_config.h"
+#include "battery.h"
+#include "buzzer.h"
+#include "rgb_led.h"
+#include "buttons.h"
 #include <math.h>
 #include <stdio.h>
 /* USER CODE END Includes */
@@ -116,6 +121,13 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   har_app_reset();
+  Buzzer_Init();
+  RGB_Init();
+  Battery_Init();
+  Battery_Show();          /* khoi dong: hien muc pin 3 s */
+
+  static button_t btn_bat  = BUTTON_INIT(BTN_BAT_PORT, BTN_BAT_PIN);
+  static button_t btn_mute = BUTTON_INIT(BTN_MUTE_PORT, BTN_MUTE_PIN);
 
   uint8_t i2c_ok = 0;
   if (ICM20948_Init(&hi2c1, ICM20948_SDO_LOW) == HAL_OK) {
@@ -124,8 +136,8 @@ int main(void)
       ICM20948_WriteRegister(&ICM20948_REG_GYRO_CONFIG_1, ICM20948_GYRO_FCHOICE | ICM20948_GYRO_FS_SEL_1000);
       i2c_ok = 1;
   } else {
-      // Bật PC4 (Kéo LOW) nếu khởi tạo I2C thất bại
-      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);
+      /* IMU loi: LED RGB nhay xanh duong (PC4 gio la LED pin, khong dung bao loi nua) */
+      printf("Loi: khong doc duoc ICM-20948 qua I2C\r\n");
   }
   /* KHONG khoi tao tu ke: HAPT thu bang dien thoai chi co acc + gyro, nen dua
    * them tu ke vao luc inference se tao ra dac trung ma model chua tung thay. */
@@ -140,6 +152,13 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    /* --- ngoai vi: khong ham nao chan, de khong lo nhip lay mau 50 Hz --- */
+    if (Button_Pressed(&btn_bat))  Battery_Show();
+    if (Button_Pressed(&btn_mute)) Buzzer_Stop();   /* chi tat tieng, den do van nhay */
+    Battery_Update();
+    Buzzer_Update();
+    RGB_Update(har_app_fall_state()->state, i2c_ok);
+
     /* --- in trang thai ra UART moi 2 giay --- */
     static uint32_t last_uart_time = 0;
     if (HAL_GetTick() - last_uart_time >= 2000) {
@@ -161,6 +180,13 @@ int main(void)
              (int)last_ev.a_min, FRAC2(last_ev.a_min),
              (int)last_ev.a_max, FRAC2(last_ev.a_max),
              (unsigned long)n_fall_total);
+
+      float bv = Battery_GetVoltage();
+      if (Battery_IsPresent()) {
+        printf("Pin: %d.%02d V (%u%%)\r\n", CENT(bv), (unsigned)Battery_GetPercent());
+      } else {
+        printf("Pin: khong co pin (dang cap nguon USB)\r\n");
+      }
     }
 
     /* --- moi mau o 50 Hz --- */
@@ -194,18 +220,14 @@ int main(void)
         last_ev = ev;
         if (ev.fall) {
           n_fall_total++;
+          Buzzer_Start();
           printf("!!! TE NGA !!!\r\n");
         }
         if (ev.recovered) {
+          Buzzer_Stop();
           printf("Da roi khoi trang thai nga\r\n");
         }
-
-        /* LED: PC1 xanh = IDLE, PC2 vang = SHOCK, PC3 do = FALLEN (keo LOW de bat) */
-        const fall_state_t *fs = har_app_fall_state();
-        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3, GPIO_PIN_SET);
-        if (fs->state == FALL_STATE_IDLE)        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
-        else if (fs->state == FALL_STATE_SHOCK)  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
-        else                                     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+        /* Mau LED RGB theo trang thai do RGB_Update() o dau vong lap lo */
       }
     }
   }

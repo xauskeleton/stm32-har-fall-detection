@@ -210,13 +210,7 @@ void TIM6_DAC_IRQHandler(void)
         missed_sample_count++;
     }
     flag_sample_imu = 1;
-    
-    // Heartbeat led (chớp nháy PC5) mỗi 0.5s để biết Timer đang chạy
-    static uint8_t tick = 0;
-    if (++tick >= 25) {
-      HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_5);
-      tick = 0;
-    }
+    /* PC5 gio la LED5 bao pin nen bo den nhay heartbeat o day */
   }
 }
 /* USER CODE END 1 */
