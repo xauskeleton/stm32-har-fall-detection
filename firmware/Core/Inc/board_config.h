@@ -61,7 +61,11 @@
  *                                                       D -> VCC HC-05
  *   PB1 = 1 -> NPN dan -> G keo xuong GND -> MOSFET dan -> HC-05 co nguon.
  *   100k giu NPN tat luc reset (chan dang la input tha noi).
- *   KHONG cap VCC HC-05 thang tu GPIO: GPIO chi chiu ~25 mA va chi ra 3.3 V.
+ *
+ *   CACH THU NHANH, khong can transistor: noi thang PB1 -> VCC HC-05, code giu
+ *   nguyen. Chi de thu: GPIO chi ra 3.3 V va chiu toi da ~25 mA, trong khi HC-05
+ *   an 30-40 mA luc cho ghep noi -> ap sut, module co the reset lien tuc, dung
+ *   lau co the hong chan PB1. Ban dung that thi dung mach transistor o tren.
  *
  *   HC-05 TXD -> A3 (PA3, USART2_RX)    HC-05 RXD <- A2 (PA2, USART2_TX)
  *   HC-05 GND -> GND                    STATE, EN: bo trong */
