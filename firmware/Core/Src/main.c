@@ -128,7 +128,7 @@ int main(void)
   Bluetooth_Init();        /* HC-05 tat cho toi khi te nga hoac nhan nut pin */
 
   static button_t btn_bat  = BUTTON_INIT(BTN_BAT_PORT, BTN_BAT_PIN);
-  static button_t btn_mute = BUTTON_INIT(BTN_MUTE_PORT, BTN_MUTE_PIN);
+  static button_t btn_bat2 = BUTTON_INIT(BTN_BAT2_PORT, BTN_BAT2_PIN);
 
   uint8_t i2c_ok = 0;
   if (ICM20948_Init(&hi2c1, ICM20948_SDO_LOW) == HAL_OK) {
@@ -153,11 +153,14 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     /* --- ngoai vi: khong ham nao chan, de khong lo nhip lay mau 50 Hz --- */
-    if (Button_Pressed(&btn_bat)) {
+    /* Ca 2 nut (KEY3 PC11, nut tron ngoai hop PC9) deu xem pin.
+     * Goi ca hai Button_Pressed() moi vong de nut nao cung chong rung dung. */
+    int pressed = Button_Pressed(&btn_bat);
+    pressed |= Button_Pressed(&btn_bat2);
+    if (pressed) {
       Battery_Show();
       Bluetooth_Wake(BT_HOLD_MS);                   /* bat HC-05 de dien thoai ket noi */
     }
-    if (Button_Pressed(&btn_mute)) Buzzer_Stop();   /* chi tat tieng, Bluetooth van bao */
     Battery_Update();                               /* do pin + mau LED RGB */
     Buzzer_Update();
     Bluetooth_Update(har_app_fall_state()->state,
