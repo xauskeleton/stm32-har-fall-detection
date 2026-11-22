@@ -1,6 +1,6 @@
-/* Do pin 2S qua PA5 va hien % bang 5 LED tren board (moi LED = 20%).
- * Binh thuong 5 LED tat de tiet kiem pin; goi Battery_Show() thi sang 3 s.
- * Duoi 10% thi LED1 nhap nhay. Khong cam pin (chi USB) thi LED tat.
+/* Do pin 2S qua PA5 va bao muc pin bang mau LED RGB (bang mau trong board_config.h).
+ * Binh thuong LED tat de tiet kiem pin; goi Battery_Show() thi sang 3 s.
+ * Duoi BAT_EMPTY_PCT thi nhay do lien tuc, khong can nhan nut.
  */
 #ifndef BATTERY_H
 #define BATTERY_H

@@ -26,7 +26,6 @@
 #include "board_config.h"
 #include "battery.h"
 #include "buzzer.h"
-#include "rgb_led.h"
 #include "buttons.h"
 #include "bluetooth.h"
 #include <math.h>
@@ -123,9 +122,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
   har_app_reset();
   Buzzer_Init();
-  RGB_Init();
-  Battery_Init();
-  Battery_Show();          /* khoi dong: hien muc pin 3 s */
+  Battery_Init();          /* khoi tao luon LED RGB bao pin */
+  Battery_Show();          /* khoi dong: LED RGB bao muc pin 3 s */
   Bluetooth_Init();        /* HC-05 tat cho toi khi te nga hoac nhan nut pin */
 
   static button_t btn_bat  = BUTTON_INIT(BTN_BAT_PORT, BTN_BAT_PIN);
@@ -138,7 +136,6 @@ int main(void)
       ICM20948_WriteRegister(&ICM20948_REG_GYRO_CONFIG_1, ICM20948_GYRO_FCHOICE | ICM20948_GYRO_FS_SEL_1000);
       i2c_ok = 1;
   } else {
-      /* IMU loi: LED RGB nhay xanh duong (PC4 gio la LED pin, khong dung bao loi nua) */
       printf("Loi: khong doc duoc ICM-20948 qua I2C\r\n");
   }
   /* KHONG khoi tao tu ke: HAPT thu bang dien thoai chi co acc + gyro, nen dua
@@ -159,10 +156,9 @@ int main(void)
       Battery_Show();
       Bluetooth_Wake(BT_HOLD_MS);                   /* bat HC-05 de dien thoai ket noi */
     }
-    if (Button_Pressed(&btn_mute)) Buzzer_Stop();   /* chi tat tieng, den do van nhay */
-    Battery_Update();
+    if (Button_Pressed(&btn_mute)) Buzzer_Stop();   /* chi tat tieng, Bluetooth van bao */
+    Battery_Update();                               /* do pin + mau LED RGB */
     Buzzer_Update();
-    RGB_Update(har_app_fall_state()->state, i2c_ok);
     Bluetooth_Update(har_app_fall_state()->state,
                      Battery_IsPresent() ? (int)Battery_GetPercent() : -1);
 
@@ -233,9 +229,7 @@ int main(void)
         if (ev.recovered) {
           Buzzer_Stop();
           printf("Da roi khoi trang thai nga\r\n");
-        }
-        /* Mau LED RGB theo trang thai do RGB_Update() o dau vong lap lo */
-      }
+        }      }
     }
   }
   /* USER CODE END 3 */

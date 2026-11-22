@@ -1,6 +1,5 @@
 #include "rgb_led.h"
 #include "board_config.h"
-#include "fall_detect.h"
 
 /* Cuc am chung: ghi 1 la sang */
 static void write_rgb(uint8_t r, uint8_t g, uint8_t b)
@@ -30,7 +29,7 @@ void RGB_Init(void)
     init_pin(RGB_R_PORT, RGB_R_PIN);
     init_pin(RGB_G_PORT, RGB_G_PIN);
     init_pin(RGB_B_PORT, RGB_B_PIN);
-    RGB_Set(RGB_GREEN);
+    RGB_Set(RGB_OFF);
 }
 
 void RGB_Set(rgb_color_t c)
@@ -48,12 +47,3 @@ void RGB_Set(rgb_color_t c)
     }
 }
 
-void RGB_Update(int fall_state, int sensor_ok)
-{
-    int blink_on = ((HAL_GetTick() / RGB_BLINK_MS) & 1u) == 0u;
-
-    if (!sensor_ok)                          RGB_Set(blink_on ? RGB_BLUE : RGB_OFF);
-    else if (fall_state == FALL_STATE_FALLEN) RGB_Set(blink_on ? RGB_RED : RGB_OFF);
-    else if (fall_state == FALL_STATE_SHOCK)  RGB_Set(RGB_YELLOW);
-    else                                      RGB_Set(RGB_GREEN);
-}

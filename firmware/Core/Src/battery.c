@@ -1,13 +1,12 @@
 #include "battery.h"
 #include "board_config.h"
+#include "rgb_led.h"
 
 /* Doc ADC1 bang thanh ghi truc tiep (khong can driver HAL ADC trong project). */
 
 #define ADC_N_AVG     16u
 #define ADC_TIMEOUT   20000u    /* vong cho EOC; 1 lan chuyen doi ~22 us */
 #define V_EMA_ALPHA   0.3f      /* lam muot dien ap giua cac lan do */
-
-static const uint16_t led_pins[5] = BAT_LED_PINS;
 
 static float   bat_v = 0.0f;
 static uint8_t bat_pct = 0;
@@ -62,14 +61,6 @@ static uint8_t voltage_to_percent(float v)
     return (uint8_t)((v - BAT_EMPTY_V) / (BAT_FULL_V - BAT_EMPTY_V) * 100.0f);
 }
 
-/* Bat n LED dau, tat cac LED con lai (keo LOW la sang) */
-static void show_leds(uint8_t n)
-{
-    for (uint8_t i = 0; i < 5u; i++) {
-        HAL_GPIO_WritePin(BAT_LED_PORT, led_pins[i], (i < n) ? GPIO_PIN_RESET : GPIO_PIN_SET);
-    }
-}
-
 static void measure(void)
 {
     uint32_t raw;
@@ -84,31 +75,32 @@ static void measure(void)
     bat_pct = (bat_v < BAT_NONE_V) ? 0u : voltage_to_percent(bat_v);
 }
 
+/* Mau LED RGB theo % pin (bang mau trong board_config.h). Binh thuong tat de
+ * tiet kiem pin; sap het pin thi nhay do ke ca khi khong nhan nut. */
 static void refresh_leds(void)
 {
-    if (!showing || bat_v < BAT_NONE_V) {
-        show_leds(0);
-        return;
-    }
-    if (bat_pct <= BAT_LOW_PCT) {
-        /* sap het pin: LED1 nhap nhay 2 Hz */
-        show_leds(((HAL_GetTick() / 250u) & 1u) ? 1u : 0u);
+    bool present = bat_v >= BAT_NONE_V;
+    bool empty   = present && bat_pct <= BAT_EMPTY_PCT;
+
+    if (empty) {
+        bool on = ((HAL_GetTick() / RGB_BLINK_MS) & 1u) == 0u;
+        RGB_Set(on ? RGB_RED : RGB_OFF);
+    } else if (!showing) {
+        RGB_Set(RGB_OFF);
+    } else if (!present) {
+        RGB_Set(RGB_BLUE);                    /* chi cap nguon USB */
+    } else if (bat_pct > BAT_HIGH_PCT) {
+        RGB_Set(RGB_GREEN);
+    } else if (bat_pct > BAT_LOW_PCT) {
+        RGB_Set(RGB_YELLOW);
     } else {
-        show_leds((uint8_t)((bat_pct + 19u) / 20u));   /* 1..5 LED */
+        RGB_Set(RGB_RED);
     }
 }
 
 void Battery_Init(void)
 {
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-    GPIO_InitTypeDef gpio = {0};
-    for (uint8_t i = 0; i < 5u; i++) gpio.Pin |= led_pins[i];
-    gpio.Mode = GPIO_MODE_OUTPUT_PP;
-    gpio.Pull = GPIO_NOPULL;
-    gpio.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_WritePin(BAT_LED_PORT, gpio.Pin, GPIO_PIN_SET);   /* tat truoc khi bat output */
-    HAL_GPIO_Init(BAT_LED_PORT, &gpio);
-
+    RGB_Init();
     adc_init();
     measure();
     last_measure = HAL_GetTick();
