@@ -122,7 +122,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   har_app_reset();
   Buzzer_Init();
-  printf("Test LED RGB: do -> xanh la -> xanh duong\r\n");
+  printf("RGB LED self-test: red -> green -> blue\r\n");
   Battery_Init();          /* khoi tao LED RGB (co tu kiem tra 3 mau) + do pin */
   Battery_Show();          /* khoi dong: LED RGB bao muc pin 3 s */
   Bluetooth_Init();        /* HC-05 luon bat, gui trang thai moi 2 s */
@@ -136,7 +136,7 @@ int main(void)
       ICM20948_WriteRegister(&ICM20948_REG_GYRO_CONFIG_1, ICM20948_GYRO_FCHOICE | ICM20948_GYRO_FS_SEL_1000);
       i2c_ok = 1;
   } else {
-      printf("Loi: khong doc duoc ICM-20948 qua I2C\r\n");
+      printf("Error: failed to read ICM-20948 over I2C\r\n");
   }
   /* KHONG khoi tao tu ke: HAPT thu bang dien thoai chi co acc + gyro, nen dua
    * them tu ke vao luc inference se tao ra dac trung ma model chua tung thay. */
@@ -172,9 +172,9 @@ int main(void)
 
       /* In ca acc THO (truoc hoan vi) va GRAVITY (sau hoan vi) de hieu chuan truc.
        * Dung yen thi gravity PHAI ra (+1.0, ~0, ~0) - neu khong, xem sensor_app.h. */
-      printf("%-18s | %-6s | acc tho (%+d.%02d %+d.%02d %+d.%02d)"
+      printf("%-18s | %-6s | acc raw (%+d.%02d %+d.%02d %+d.%02d)"
              " | gravity (%+d.%02d %+d.%02d %+d.%02d)"
-             " | |a| %d.%02d..%d.%02d g | nga: %lu\r\n",
+             " | |a| %d.%02d..%d.%02d g | falls: %lu\r\n",
              har_label_name(last_ev.label), state_name,
              CENT(last_acc_raw[0]), CENT(last_acc_raw[1]), CENT(last_acc_raw[2]),
              CENT(gv[0]), CENT(gv[1]), CENT(gv[2]),
@@ -184,9 +184,9 @@ int main(void)
 
       float bv = Battery_GetVoltage();
       if (Battery_IsPresent()) {
-        printf("Pin: %d.%02d V (%u%%)\r\n", CENT(bv), (unsigned)Battery_GetPercent());
+        printf("Battery: %d.%02d V (%u%%)\r\n", CENT(bv), (unsigned)Battery_GetPercent());
       } else {
-        printf("Pin: khong co pin (dang cap nguon USB)\r\n");
+        printf("Battery: no battery (USB power)\r\n");
       }
     }
 
@@ -222,11 +222,11 @@ int main(void)
         if (ev.fall) {
           n_fall_total++;
           Buzzer_Start();
-          printf("!!! TE NGA !!!\r\n");
+          printf("!!! FALL DETECTED !!!\r\n");
         }
         if (ev.recovered) {
           Buzzer_Stop();
-          printf("Da roi khoi trang thai nga\r\n");
+          printf("Recovered from fall\r\n");
         }      }
     }
   }

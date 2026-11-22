@@ -81,7 +81,7 @@
 #define BT_RX_PORT          GPIOA
 #define BT_RX_PIN           GPIO_PIN_1
 #define BT_GPIO_AF          GPIO_AF8_UART4
-#define BT_BAUD             9600u    /* mac dinh cua HC-05 o che do du lieu */
+#define BT_BAUD             115200u  /* baud rate UART4 giao tiep HC-05 */
 #define BT_BOOT_MS          1000u    /* cho HC-05 khoi dong sau khi cap nguon */
 #define BT_SEND_MS          2000u    /* chu ky gui hanh dong + trang thai */
 
