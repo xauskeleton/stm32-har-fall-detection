@@ -22,8 +22,8 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from har import config as cfg
-from har import dataset, dsp, fall, model as har_model
+from core import config as cfg
+from core import dataset, dsp, fall, model as core_model
 
 
 def window_labels(labels, exp_id, user_id, n_win):
@@ -40,7 +40,7 @@ def run_experiment(rec, labels, key, scaler, clf, cols, params):
     X = dsp.pipeline(rec['acc'], rec['gyro'])
     if X is None:
         return None
-    pred = har_model.predict(scaler, clf, cols, X)
+    pred = core_model.predict(scaler, clf, cols, X)
     truth = window_labels(labels, key[0], key[1], len(X))
 
     out = {'n_win': len(X), 'truth': truth, 'pred': pred,
@@ -55,11 +55,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--data', default=None)
     ap.add_argument('--cache', default=None)
-    ap.add_argument('--models', default=har_model.DEFAULT_DIR)
+    ap.add_argument('--models', default=core_model.DEFAULT_DIR)
     ap.add_argument('--rule', default=None, choices=['both', 'any', 'labels'])
     args = ap.parse_args()
 
-    scaler, clf, cols, _ = har_model.load_bundle(args.models)
+    scaler, clf, cols, _ = core_model.load_bundle(args.models)
     params = fall.FallParams(shock_rule=args.rule) if args.rule else fall.FallParams()
 
     try:

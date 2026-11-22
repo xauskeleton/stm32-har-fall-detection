@@ -1,4 +1,4 @@
-/* Xem har_features.h. Ban tham chieu Python: ml/har/dsp.py extract_features(). */
+/* Xem har_features.h. Ban tham chieu Python: ml/core/dsp.py extract_features(). */
 #include "har_features.h"
 
 #include <math.h>
@@ -9,7 +9,7 @@
 #define NSPEC  HAR_N_SPECTRUM
 
 /* Nhom nao duoc lay pho 3 truc / pho cua do lon - khop cfg.SIGNALS_SPEC va
- * cfg.SIGNALS_SPEC_MAG trong ml/har/config.py. */
+ * cfg.SIGNALS_SPEC_MAG trong ml/core/config.py. */
 static const int SPEC_SIG[3] = { HAR_SIG_BODY_ACC, HAR_SIG_BODY_ACC_JERK, HAR_SIG_GYRO };
 static const int SPEC_MAG_SIG[4] = { HAR_SIG_BODY_ACC, HAR_SIG_BODY_ACC_JERK,
                                      HAR_SIG_GYRO, HAR_SIG_GYRO_JERK };

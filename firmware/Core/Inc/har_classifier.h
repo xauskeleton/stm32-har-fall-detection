@@ -1,6 +1,6 @@
 /* Chon 160 cot -> chuan hoa -> nhan ma tran 12x160 -> argmax.
  *
- * Ban tham chieu Python: ml/har/model.py predict(). Da doi chieu tren 3162 cua so tap
+ * Ban tham chieu Python: ml/core/model.py predict(). Da doi chieu tren 3162 cua so tap
  * test: 0 cua so lech nhan (xem docs/DECISIONS.md muc 7).
  */
 #ifndef HAR_CLASSIFIER_H

@@ -1,8 +1,8 @@
 /* 516 dac trung cho mot cua so 128 mau.
  *
- * Ban tham chieu Python: ml/har/dsp.py extract_features(). Thu tu PHAI giu nguyen -
+ * Ban tham chieu Python: ml/core/dsp.py extract_features(). Thu tu PHAI giu nguyen -
  * dao thu tu la model sai IM LANG, khong co thong bao loi nao.
- * ml/har/dsp.py feature_names() in ra dung thu tu de doi chieu.
+ * ml/core/dsp.py feature_names() in ra dung thu tu de doi chieu.
  */
 #ifndef HAR_FEATURES_H
 #define HAR_FEATURES_H

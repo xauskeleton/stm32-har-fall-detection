@@ -16,7 +16,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from har import dataset, export_c, fall, model as har_model
+from core import dataset, export_c, fall, model as core_model
 
 
 def pick_golden(args):
@@ -40,15 +40,15 @@ def pick_golden(args):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--models', default=har_model.DEFAULT_DIR)
-    ap.add_argument('--out', default=os.path.normpath(os.path.join(har_model.DEFAULT_DIR, '..', '..', 'firmware')))
+    ap.add_argument('--models', default=core_model.DEFAULT_DIR)
+    ap.add_argument('--out', default=os.path.normpath(os.path.join(core_model.DEFAULT_DIR, '..', '..', 'firmware')))
     ap.add_argument('--data', default=None, help='duong dan HAPT RawData')
     ap.add_argument('--golden', nargs=2, metavar=('ACC', 'GYRO'), default=None)
     # 385 = 5 cua so tron (0..383) + 1 mau de median 3 streaming xuat duoc chi so 383
     ap.add_argument('--golden-samples', type=int, default=385)
     args = ap.parse_args()
 
-    scaler, clf, cols, meta = har_model.load_bundle(args.models)
+    scaler, clf, cols, meta = core_model.load_bundle(args.models)
     if not meta:
         raise SystemExit('Thieu ml/models/meta.json - chay ml/scripts/train.py truoc')
 
@@ -65,7 +65,7 @@ def main():
     if golden is None:
         print('  %-44s %6s' % (os.path.join(args.out, 'test', 'golden_vectors.h'),
                                'giu nguyen'))
-    print('\nKHONG SUA TAY cac file tren. Sua ml/har/export_c.py roi chay lai.')
+    print('\nKHONG SUA TAY cac file tren. Sua ml/core/export_c.py roi chay lai.')
 
 
 if __name__ == '__main__':

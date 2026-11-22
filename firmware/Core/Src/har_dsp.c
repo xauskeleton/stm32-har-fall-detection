@@ -1,4 +1,4 @@
-/* Xem har_dsp.h. Ban tham chieu Python: ml/har/dsp.py. */
+/* Xem har_dsp.h. Ban tham chieu Python: ml/core/dsp.py. */
 #include "har_dsp.h"
 
 #include <math.h>

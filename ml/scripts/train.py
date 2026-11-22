@@ -19,13 +19,13 @@ from sklearn.feature_selection import RFE
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
-from har import config as cfg
-from har import dataset, dsp, model as har_model
+from core import config as cfg
+from core import dataset, dsp, model as core_model
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--data', default=None, help='duong dan HAPT RawData')
 ap.add_argument('--cache', default=None, help='file .npz cache tin hieu raw')
-ap.add_argument('--out', default=har_model.DEFAULT_DIR)
+ap.add_argument('--out', default=core_model.DEFAULT_DIR)
 ap.add_argument('-C', type=float, default=cfg.LOGREG_C)
 ap.add_argument('-k', type=int, default=cfg.N_FEATURES)
 args = ap.parse_args()
@@ -52,16 +52,16 @@ clf = LogisticRegression(C=args.C, max_iter=4000, random_state=cfg.SEED)
 clf.fit(scaler.transform(X_train[:, cols]), y_train)
 
 # === DANH GIA tren tap test ===
-pred = har_model.predict(scaler, clf, cols, X_test)
-metrics = har_model.metrics(y_test, pred)
+pred = core_model.predict(scaler, clf, cols, X_test)
+metrics = core_model.metrics(y_test, pred)
 arch = 'logreg %d-%d' % (args.k, cfg.N_CLASSES)
-har_model.print_metrics(arch, metrics)
+core_model.print_metrics(arch, metrics)
 print()
-print(har_model.report(y_test, pred))
+print(core_model.report(y_test, pred))
 
 # === LUU MODEL ===
 n_par = clf.coef_.size + clf.intercept_.size
-har_model.save_bundle(args.out, scaler, clf, cols, {
+core_model.save_bundle(args.out, scaler, clf, cols, {
     'arch': arch, 'kind': 'logreg', 'C': args.C,
     'signals': list(cfg.SIGNALS),
     'n_features_all': int(X_train.shape[1]), 'n_features': args.k,

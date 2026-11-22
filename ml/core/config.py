@@ -22,7 +22,7 @@ FC_GRAV = 0.3            # Hz - lowpass tach gravity
 
 # === Bo dac trung ===
 # 561 dac trung tinh ra, roi giu 160 cot do RFE chon (docs/DECISIONS.md muc 2).
-# Thu tu PHAI giu nguyen y nhu ml/har/dsp.py sinh ra - firmware doc theo dung thu tu
+# Thu tu PHAI giu nguyen y nhu ml/core/dsp.py sinh ra - firmware doc theo dung thu tu
 # nay, dao thu tu la model sai im lang. dsp.feature_names() de kiem tra.
 
 # 5 nhom tin hieu 3 truc. gravity = lowpass 0.3 Hz cua acc, body_acc = acc - gravity,
@@ -43,7 +43,7 @@ CHANNELS = ('x', 'y', 'z')
 # (entropy). Firmware chay float32 nen nhung cot do khong dung duoc -> bo han.
 SIGNALS_NEAR_CONST = ('gravity',)
 
-# Cac phep tinh va thu tu cua chung nam ngay trong ml/har/dsp.py extract_features(),
+# Cac phep tinh va thu tu cua chung nam ngay trong ml/core/dsp.py extract_features(),
 # ten dac trung sinh cung luc voi gia tri nen khong the lech nhau.
 # Kenh do lon khong co 'sma': do lon luon >= 0 nen mean(|x|) trung khop mean(x) tung bit
 # (ban 561 chinh thuc cua HAPT co ca hai nen thua 9 cot; o day bo di -> 552).

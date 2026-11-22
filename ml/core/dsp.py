@@ -32,7 +32,7 @@ from scipy.signal import butter, sosfilt, sosfilt_zi
 
 from . import config as cfg
 
-# He so 2 bo loc - xuat sang C boi ml/har/export_c.py
+# He so 2 bo loc - xuat sang C boi ml/core/export_c.py
 SOS_NOISE = butter(cfg.FILTER_ORDER, cfg.FC_NOISE / (cfg.FS / 2), 'low', output='sos')
 SOS_GRAV = butter(cfg.FILTER_ORDER, cfg.FC_GRAV / (cfg.FS / 2), 'low', output='sos')
 

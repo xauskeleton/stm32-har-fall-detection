@@ -1,7 +1,7 @@
 /* Duong ong streaming: nap tung mau o 50 Hz, cu HAR_STEP mau moi thi phan loai 1 lan.
  *
  * Giu trang thai bo loc qua cac mau nen KHONG co transient giua cac cua so, giong
- * ml/har/dsp.py loc tren toan bo chuoi lien tuc truoc khi cat cua so.
+ * ml/core/dsp.py loc tren toan bo chuoi lien tuc truoc khi cat cua so.
  *
  * Bo nho: buffer tin hieu 5 nhom x 3 truc x 128 float = 7680 byte, cong kenh soc
  * 128 x 3 float = 1536 byte, cong scratch cua har_dsp/har_features ~2 KB.

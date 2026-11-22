@@ -115,7 +115,7 @@ luôn đi qua `STAND_TO_LIE` / `SIT_TO_LIE`; té ngã thì nhảy thẳng từ `
 
 ```
 ml/                     phần mềm Python: huấn luyện mô hình, sinh code C
-  har/                  thư viện Python dùng chung
+  core/                 lõi xử lý: lọc, đặc trưng, mô hình, té ngã, sinh code C
     config.py           hằng số DSP, 12 nhãn, chia train/test theo người
     dsp.py              median 3, lowpass 20 Hz, tách gravity, jerk, 516 đặc trưng
     dataset.py          đọc HAPT RawData, Phyphox CSV, log UART, ground truth
@@ -134,7 +134,7 @@ firmware/               sinh tự động — KHÔNG sửa tay
   Core/Src/har_features.c    516 đặc trưng                                         (viết tay)
   Core/Src/har_classifier.c  chọn cột + chuẩn hoá + nhân ma trận + argmax          (viết tay)
   Core/Src/har_pipeline.c    ring buffer, chạy mỗi 64 mẫu mới                      (viết tay)
-  Core/Src/fall_detect.c     bản sao của ml/har/fall.py                            (viết tay)
+  Core/Src/fall_detect.c     bản sao của ml/core/fall.py                            (viết tay)
   Core/Src/har_app.c         hoán vị trục + kẹp tín hiệu, không phụ thuộc HAL      (viết tay)
   test/test_parity.c         đối chiếu C vs Python, make -C firmware test          (viết tay)
 docs/
@@ -162,7 +162,7 @@ export HAPT_RAWDATA=/đường/dẫn/tới/RawData
 python ml/scripts/train.py --data /đường/dẫn/tới/RawData
 ```
 
-`har.dataset.find_rawdata()` tự dò các vị trí quen thuộc.
+`core.dataset.find_rawdata()` tự dò các vị trí quen thuộc.
 
 **Phải dùng đúng bản gốc.** Có những bản HAPT lưu hành đã bị cộng nhiễu để làm bài tập khử
 nhiễu; huấn luyện trên bản đó mất ~6% accuracy mà không báo lỗi gì. Dấu hiệu: giá trị ghi 16

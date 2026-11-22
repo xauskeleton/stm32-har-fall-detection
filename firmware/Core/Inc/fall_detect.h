@@ -1,6 +1,6 @@
 /* Phat hien te nga TU CHUOI NHAN dau ra cua bo phan loai 12 lop.
  *
- * BAN SAO 1-1 cua ml/har/fall.py. Sua mot ben thi PHAI sua ben kia.
+ * BAN SAO 1-1 cua ml/core/fall.py. Sua mot ben thi PHAI sua ben kia.
  *
  *   Nam xuong binh thuong :  STANDING -> STAND_TO_LIE -> LAYING
  *                            SITTING  -> SIT_TO_LIE   -> LAYING
