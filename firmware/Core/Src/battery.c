@@ -79,20 +79,25 @@ static void measure(void)
  * tiet kiem pin; sap het pin thi nhay do ke ca khi khong nhan nut. */
 static void refresh_leds(void)
 {
+    uint32_t now = HAL_GetTick();
+    bool fast_on = ((now / RGB_BLINK_MS) & 1u) == 0u;
+    bool slow_on = ((now / BAT_BLINK_SLOW_MS) & 1u) == 0u;
     bool present = bat_v >= BAT_NONE_V;
-    bool empty   = present && bat_pct <= BAT_EMPTY_PCT;
 
-    if (empty) {
-        bool on = ((HAL_GetTick() / RGB_BLINK_MS) & 1u) == 0u;
-        RGB_Set(on ? RGB_RED : RGB_OFF);
+    if (present && bat_pct <= BAT_PCT_EMPTY) {
+        RGB_Set(fast_on ? RGB_RED : RGB_OFF);       /* sap het pin: bao ca khi khong nhan nut */
     } else if (!showing) {
         RGB_Set(RGB_OFF);
     } else if (!present) {
-        RGB_Set(RGB_BLUE);                    /* chi cap nguon USB */
-    } else if (bat_pct > BAT_HIGH_PCT) {
+        RGB_Set(RGB_BLUE);                          /* chi cap nguon USB */
+    } else if (bat_pct > BAT_PCT_FULL) {
         RGB_Set(RGB_GREEN);
-    } else if (bat_pct > BAT_LOW_PCT) {
+    } else if (bat_pct > BAT_PCT_GOOD) {
+        RGB_Set(slow_on ? RGB_GREEN : RGB_OFF);
+    } else if (bat_pct > BAT_PCT_HALF) {
         RGB_Set(RGB_YELLOW);
+    } else if (bat_pct > BAT_PCT_LOW) {
+        RGB_Set(slow_on ? RGB_YELLOW : RGB_OFF);
     } else {
         RGB_Set(RGB_RED);
     }
