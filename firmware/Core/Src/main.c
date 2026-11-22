@@ -22,7 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "icm20948.h"
-#include "har_app.h"
+#include "sensor_app.h"
 #include "board_config.h"
 #include "battery.h"
 #include "buzzer.h"
@@ -177,7 +177,7 @@ int main(void)
       har_app_gravity(gv);
 
       /* In ca acc THO (truoc hoan vi) va GRAVITY (sau hoan vi) de hieu chuan truc.
-       * Dung yen thi gravity PHAI ra (+1.0, ~0, ~0) - neu khong, xem har_app.h. */
+       * Dung yen thi gravity PHAI ra (+1.0, ~0, ~0) - neu khong, xem sensor_app.h. */
       printf("%-18s | %-6s | acc tho (%+d.%02d %+d.%02d %+d.%02d)"
              " | gravity (%+d.%02d %+d.%02d %+d.%02d)"
              " | |a| %d.%02d..%d.%02d g | nga: %lu\r\n",

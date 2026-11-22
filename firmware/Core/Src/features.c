@@ -1,9 +1,9 @@
-/* Xem har_features.h. Ban tham chieu Python: ml/core/dsp.py extract_features(). */
-#include "har_features.h"
+/* Xem features.h. Ban tham chieu Python: ml/core/dsp.py extract_features(). */
+#include "features.h"
 
 #include <math.h>
 
-#include "har_dsp.h"
+#include "dsp.h"
 
 #define W      HAR_WINDOW
 #define NSPEC  HAR_N_SPECTRUM

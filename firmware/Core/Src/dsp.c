@@ -1,5 +1,5 @@
-/* Xem har_dsp.h. Ban tham chieu Python: ml/core/dsp.py. */
-#include "har_dsp.h"
+/* Xem dsp.h. Ban tham chieu Python: ml/core/dsp.py. */
+#include "dsp.h"
 
 #include <math.h>
 #include <stdlib.h>

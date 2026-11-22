@@ -3,8 +3,8 @@
  * Ban tham chieu Python: ml/core/model.py predict(). Da doi chieu tren 3162 cua so tap
  * test: 0 cua so lech nhan (xem docs/DECISIONS.md muc 7).
  */
-#ifndef HAR_CLASSIFIER_H
-#define HAR_CLASSIFIER_H
+#ifndef CLASSIFIER_H
+#define CLASSIFIER_H
 
 #include "model_params.h"
 
@@ -14,4 +14,4 @@
  */
 int har_classify(const float *feat, float *scores);
 
-#endif /* HAR_CLASSIFIER_H */
+#endif /* CLASSIFIER_H */

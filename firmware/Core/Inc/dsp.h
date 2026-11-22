@@ -5,8 +5,8 @@
  *
  * Toan bo dung float, KHONG dung double: FPU cua Cortex-M4 chi co single precision.
  */
-#ifndef HAR_DSP_H
-#define HAR_DSP_H
+#ifndef DSP_H
+#define DSP_H
 
 #include "model_params.h"
 
@@ -61,4 +61,4 @@ float har_mean_freq(const float *x, int n);    /* trong tam pho, trong so |X| */
 void  har_burg(const float *x, int n, float *out);   /* he so AR bac HAR_AR_ORDER */
 float har_angle(const float *v, const float *g);     /* goc 2 vector 3 chieu, tru pi/2 */
 
-#endif /* HAR_DSP_H */
+#endif /* DSP_H */

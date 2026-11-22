@@ -1,5 +1,5 @@
-/* Xem har_classifier.h. */
-#include "har_classifier.h"
+/* Xem classifier.h. */
+#include "classifier.h"
 
 int har_classify(const float *feat, float *scores)
 {

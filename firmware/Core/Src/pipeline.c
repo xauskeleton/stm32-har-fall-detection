@@ -1,12 +1,12 @@
-/* Xem har_pipeline.h. */
-#include "har_pipeline.h"
+/* Xem pipeline.h. */
+#include "pipeline.h"
 
 #include <math.h>
 #include <string.h>
 
-#include "har_classifier.h"
-#include "har_dsp.h"
-#include "har_features.h"
+#include "classifier.h"
+#include "dsp.h"
+#include "features.h"
 
 #define W  HAR_WINDOW
 

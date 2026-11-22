@@ -21,8 +21,8 @@
  *
  * Don vi BAT BUOC: acc tinh bang g, gyro tinh bang rad/s - phai khop HAPT.
  */
-#ifndef HAR_APP_H
-#define HAR_APP_H
+#ifndef SENSOR_APP_H
+#define SENSOR_APP_H
 
 #include "fall_detect.h"
 #include "model_params.h"
@@ -97,4 +97,4 @@ const fall_state_t *har_app_fall_state(void);
  * khong dung trong duong tinh dac trung. Dung yen thi phai ra (+1.0, ~0, ~0). */
 void har_app_gravity(float out[3]);
 
-#endif /* HAR_APP_H */
+#endif /* SENSOR_APP_H */

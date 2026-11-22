@@ -1,7 +1,7 @@
-/* Xem har_app.h. */
-#include "har_app.h"
+/* Xem sensor_app.h. */
+#include "sensor_app.h"
 
-#include "har_pipeline.h"
+#include "pipeline.h"
 
 static fall_state_t fall_st;
 
@@ -39,7 +39,7 @@ int har_app_on_sample(const float acc_g[3], const float gyro_rads[3],
     float a[3], g[3];
 
 #if HAR_AXIS_PERMUTE
-    /* hapt[i] = SIGN_i * board[SRC_i], ap cho CA acc va gyro. Xem har_app.h de biet
+    /* hapt[i] = SIGN_i * board[SRC_i], ap cho CA acc va gyro. Xem sensor_app.h de biet
      * cach hieu chuan bo so nay cho tung cach gan board. */
     a[0] = HAR_AXIS_SIGN_X * acc_g[HAR_AXIS_SRC_X];
     a[1] = HAR_AXIS_SIGN_Y * acc_g[HAR_AXIS_SRC_Y];

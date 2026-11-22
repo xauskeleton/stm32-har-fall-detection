@@ -78,7 +78,7 @@ def deriv(sig):
 
     Dung sai phan lui chu khong phai tien vi sai phan tien can mau x[n+1], tuc
     non-causal - khong chay streaming duoc. Xem docs/DECISIONS.md muc 5.
-    Ban C: har_pipeline.c tinh dung cong thuc nay, mau dau tien cung bang 0.
+    Ban C: pipeline.c tinh dung cong thuc nay, mau dau tien cung bang 0.
     """
     x = np.asarray(sig, dtype=np.float64)
     d = np.zeros_like(x)

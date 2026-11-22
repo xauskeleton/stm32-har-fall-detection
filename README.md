@@ -130,12 +130,12 @@ ml/                     phần mềm Python: huấn luyện mô hình, sinh code
 firmware/               sinh tự động — KHÔNG sửa tay
   Core/Inc/model_params.h    hằng số, ngưỡng, khai báo extern
   Core/Src/model_params.c    biquad, ZI, HAR_BANDS, HAR_SELECTED, scaler, ma trận 12×160
-  Core/Src/har_dsp.c         median 3, cascade biquad, FFT 128, 14 phép thống kê   (viết tay)
-  Core/Src/har_features.c    516 đặc trưng                                         (viết tay)
-  Core/Src/har_classifier.c  chọn cột + chuẩn hoá + nhân ma trận + argmax          (viết tay)
-  Core/Src/har_pipeline.c    ring buffer, chạy mỗi 64 mẫu mới                      (viết tay)
+  Core/Src/dsp.c             median 3, cascade biquad, FFT 128, 14 phép thống kê   (viết tay)
+  Core/Src/features.c        516 đặc trưng                                         (viết tay)
+  Core/Src/classifier.c      chọn cột + chuẩn hoá + nhân ma trận + argmax          (viết tay)
+  Core/Src/pipeline.c        ring buffer, chạy mỗi 64 mẫu mới                      (viết tay)
   Core/Src/fall_detect.c     bản sao của ml/core/fall.py                            (viết tay)
-  Core/Src/har_app.c         hoán vị trục + kẹp tín hiệu, không phụ thuộc HAL      (viết tay)
+  Core/Src/sensor_app.c      hoán vị trục + kẹp tín hiệu, không phụ thuộc HAL      (viết tay)
   test/test_parity.c         đối chiếu C vs Python, make -C firmware test          (viết tay)
 docs/
   DECISIONS.md          số liệu chứng minh từng quyết định kỹ thuật

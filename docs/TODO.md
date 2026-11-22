@@ -30,12 +30,12 @@ Toàn bộ `float`, không `malloc` trong đường chạy, biên dịch `-Wall 
 **0 warning**. Đối chiếu với Python trên toàn bộ tập test: **0 / 3.156 cửa sổ lệch nhãn**,
 accuracy giống hệt (91,73% cả hai — xem `DECISIONS.md` mục 7 về con số này).
 
-- [x] `har_dsp.c` — median 3 streaming (trễ 1 mẫu, khớp bit với `ml/core/dsp.py`), cascade biquad
+- [x] `dsp.c` — median 3 streaming (trễ 1 mẫu, khớp bit với `ml/core/dsp.py`), cascade biquad
       DF2T với state khởi tạo về xác lập, FFT radix-2 128 điểm tự viết, 14 phép thống kê
       (`iqr` quy ước MATLAB, `entropy` 256 ô cố định, `burg` AR bậc 4, …)
-- [x] `har_features.c` — 516 đặc trưng, thứ tự khớp `ml/core/dsp.py extract_features()`
-- [x] `har_classifier.c` — chọn cột theo `HAR_SELECTED` → chuẩn hoá → nhân ma trận 160×12 → argmax
-- [x] `har_pipeline.c` — ring buffer 5 nhóm × 3 trục × 128 mẫu, chạy mỗi 64 mẫu mới, giữ state
+- [x] `features.c` — 516 đặc trưng, thứ tự khớp `ml/core/dsp.py extract_features()`
+- [x] `classifier.c` — chọn cột theo `HAR_SELECTED` → chuẩn hoá → nhân ma trận 160×12 → argmax
+- [x] `pipeline.c` — ring buffer 5 nhóm × 3 trục × 128 mẫu, chạy mỗi 64 mẫu mới, giữ state
       bộ lọc qua các mẫu
 - [x] `fall_detect.c` — bản sao 1-1 của `ml/core/fall.py`, có cả `upright_min`
 - [x] `test/test_parity.c` + `Makefile` — `make -C firmware test`, tiêu chí ĐẠT là **nhãn khớp
@@ -73,17 +73,17 @@ chạy trên board.**
       mà model đọc ra **LAYING** liên tục. Nguyên nhân: HAPT quy định gravity nằm trên **+X**
       khi đứng/ngồi/đi (≈ +1.00 g), còn khi **nằm** thì X ≈ 0 và gravity dồn sang Y/Z. Nếu
       gravity không rơi vào +X thì model đọc thành LAYING bất kể người đang đứng.
-      Cách hiệu chuẩn (có hướng dẫn đầy đủ trong `har_app.h`): gắn board đúng như khi dùng,
+      Cách hiệu chuẩn (có hướng dẫn đầy đủ trong `sensor_app.h`): gắn board đúng như khi dùng,
       đứng thẳng, đọc dòng UART `acc tho (...)` — trục nào ≈ ±1.0 g là trục chỉ xuống đất, điền
       vào `HAR_AXIS_SRC_X` / `HAR_AXIS_SIGN_X`. Nạp lại và kiểm `gravity (...)` phải ra
       `(+1.0, ~0, ~0)`.
 - [ ] Chốt bus cảm biến: I2C (đang dùng) hay SPI — nếu đổi thì chỉ sửa `read_reg`/`write_reg`
-- [x] **Kẹp tín hiệu** — `har_app.c` kẹp **từng trục** vào ±2,0 g và ±10 rad/s trước khi đưa
+- [x] **Kẹp tín hiệu** — `sensor_app.c` kẹp **từng trục** vào ±2,0 g và ±10 rad/s trước khi đưa
       vào pipeline. HAPT bị bão hoà ở đúng hai mốc đó nên model chưa từng thấy giá trị vượt quá.
       Kẹp từng trục **không** làm chết nhánh phát hiện sốc: ngưỡng 2,2 g đo trên chuẩn
       `|a| = sqrt(x²+y²+z²)`, mà chuẩn lên tới 2√3 = 3,46 g dù mỗi trục bị kẹp ở 2 g — đúng
       như dữ liệu HAPT (bão hoà từng trục, vẫn có |a| tới 2,43 g ở phân vị 99 khi đi lại).
-- [x] Hoán vị trục — `har_app.c` áp `(−x, +z, +y)` cho **cả acc và gyro** (`HAR_AXIS_PERMUTE`).
+- [x] Hoán vị trục — `sensor_app.c` áp `(−x, +z, +y)` cho **cả acc và gyro** (`HAR_AXIS_PERMUTE`).
       **PHẢI xác nhận board còn gắn đúng như lúc ghi dữ liệu** trước khi tin bộ số này; đặt
       `HAR_AXIS_PERMUTE 0` để tắt.
 - [ ] Ngân sách thời gian là 1.280 ms nên không có rủi ro, nhưng **chưa đo** cho bộ 516 đặc

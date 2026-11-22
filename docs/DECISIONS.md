@@ -458,7 +458,7 @@ mẫu **tương lai** `x[n+1]` để tính được mẫu `n`. Đó là non-caus
 lùi, làm `jerk` **lệch 1 mẫu** so với Python → `f_body_acc_jerk_y_mean_freq` sai 1,03 (10%).
 
 Đã đổi `ml/core/dsp.py deriv()` sang **sai phân lùi** `jerk[n] = (x[n] − x[n−1]) · fs`, mẫu đầu = 0
-— đúng công thức mà `har_pipeline.c` tính được mà không cần đệm thêm mẫu nào. Accuracy không
+— đúng công thức mà `pipeline.c` tính được mà không cần đệm thêm mẫu nào. Accuracy không
 đổi đáng kể (93,20% → **93,23%**), và đổi lại pipeline hết non-causal hoàn toàn.
 
 ---
@@ -505,9 +505,9 @@ int8 chỉ có lợi khi MCU không có FPU (M0/M3) hoặc model lớn cỡ MB; 
 
 ### Đối chiếu C ↔ Python: 0 / 3.156 cửa sổ lệch nhãn
 
-Firmware C đã có đủ trong `firmware/Core/`: `har_dsp.c` (median 3 streaming, cascade biquad,
-FFT 128 tự viết, 14 phép thống kê), `har_features.c` (516 đặc trưng), `har_classifier.c`,
-`har_pipeline.c` (ring buffer, chạy mỗi 64 mẫu mới), `fall_detect.c`. Toàn bộ `float`, biên dịch
+Firmware C đã có đủ trong `firmware/Core/`: `dsp.c` (median 3 streaming, cascade biquad,
+FFT 128 tự viết, 14 phép thống kê), `features.c` (516 đặc trưng), `classifier.c`,
+`pipeline.c` (ring buffer, chạy mỗi 64 mẫu mới), `fall_detect.c`. Toàn bộ `float`, biên dịch
 `-Wall -Wextra -Wdouble-promotion` **0 warning**, không `malloc` trong đường chạy.
 
 Chạy **chính code đó** trên toàn bộ tập test:

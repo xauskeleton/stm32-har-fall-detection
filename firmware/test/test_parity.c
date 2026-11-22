@@ -9,9 +9,9 @@
 #include <stdio.h>
 
 #include "golden_vectors.h"
-#include "har_app.h"
-#include "har_classifier.h"
-#include "har_pipeline.h"
+#include "sensor_app.h"
+#include "classifier.h"
+#include "pipeline.h"
 
 int main(void)
 {

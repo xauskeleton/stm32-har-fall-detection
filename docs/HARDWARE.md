@@ -119,7 +119,7 @@ không phải tiêu chí phân biệt.
 > `_Min_Stack_Size = 0x400; /* required amount of stack (16KB) */`.
 > Hai chú thích đều **sai**: 0x200 = 512 byte, 0x400 = 1 KB. Đây là chú thích sẵn của
 > template ST, không phải lỗi của ai. Stack 1 KB hiện đủ vì mọi buffer lớn trong
-> `har_dsp.c` đều khai báo `static` (nằm ở `.bss`), không nằm trên stack.
+> `dsp.c` đều khai báo `static` (nằm ở `.bss`), không nằm trên stack.
 
 ## Hướng đặt cảm biến — CHƯA khớp
 
@@ -213,6 +213,6 @@ vào +X lúc đứng yên, model đọc thành LAYING bất kể người đang 
 gặp khi thử trên board lần đầu.
 
 Đây **không** phải lỗi model: nó là lệch hệ trục giữa board và điện thoại của HAPT.
-`har_app.h` có bảng `HAR_AXIS_SRC_*` / `HAR_AXIS_SIGN_*` kèm quy trình hiệu chuẩn 4 bước, và
+`sensor_app.h` có bảng `HAR_AXIS_SRC_*` / `HAR_AXIS_SIGN_*` kèm quy trình hiệu chuẩn 4 bước, và
 `main.c` in cả `acc tho` (trước hoán vị) lẫn `gravity` (sau hoán vị) ra UART để hiệu chuẩn
 không cần nạp lại firmware nhiều lần. Đứng yên thì `gravity` phải ra `(+1.0, ~0, ~0)`.

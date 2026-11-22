@@ -4,8 +4,8 @@
  * dao thu tu la model sai IM LANG, khong co thong bao loi nao.
  * ml/core/dsp.py feature_names() in ra dung thu tu de doi chieu.
  */
-#ifndef HAR_FEATURES_H
-#define HAR_FEATURES_H
+#ifndef FEATURES_H
+#define FEATURES_H
 
 #include "model_params.h"
 
@@ -17,4 +17,4 @@
  */
 void har_features(const float win[HAR_N_SIGNALS][3][HAR_WINDOW], float *out);
 
-#endif /* HAR_FEATURES_H */
+#endif /* FEATURES_H */

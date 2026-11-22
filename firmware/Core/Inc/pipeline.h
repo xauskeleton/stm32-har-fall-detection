@@ -6,8 +6,8 @@
  * Bo nho: buffer tin hieu 5 nhom x 3 truc x 128 float = 7680 byte, cong kenh soc
  * 128 x 3 float = 1536 byte, cong scratch cua har_dsp/har_features ~2 KB.
  */
-#ifndef HAR_PIPELINE_H
-#define HAR_PIPELINE_H
+#ifndef PIPELINE_H
+#define PIPELINE_H
 
 #include "model_params.h"
 
@@ -33,4 +33,4 @@ int har_pipeline_push(const float acc[3], const float gyro[3], har_result_t *out
  * golden_vectors.h va de go loi tren board. Chi hop le sau khi push() tra ve 1. */
 const float *har_pipeline_features(void);
 
-#endif /* HAR_PIPELINE_H */
+#endif /* PIPELINE_H */
