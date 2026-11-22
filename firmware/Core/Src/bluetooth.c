@@ -78,6 +78,23 @@ void Bluetooth_Init(void)
     uart_start();
     t_power_on = HAL_GetTick();
     t_last_send = t_power_on;
+
+    /* Tu kiem tra: in cau hinh UART4 ra USART1, roi gui thang 1 dong qua HC-05
+     * (cho HC-05 khoi dong truoc). Neu USART1 hien dung so ma dien thoai khong
+     * nhan duoc "HC-05 OK" -> loi o day / HC-05, khong phai o code. */
+    printf("UART4: CR1=0x%04lX BRR=%lu (PCLK1=%lu) | PA MODER=0x%08lX AFRL=0x%08lX | PB1=%d\r\n",
+           (unsigned long)BT_UART->CR1, (unsigned long)BT_UART->BRR,
+           (unsigned long)HAL_RCC_GetPCLK1Freq(),
+           (unsigned long)GPIOA->MODER, (unsigned long)GPIOA->AFR[0],
+           (int)HAL_GPIO_ReadPin(BT_PWR_PORT, BT_PWR_PIN));
+    HAL_Delay(BT_BOOT_MS);
+    const char *msg = "HC-05 OK\r\n";
+    for (const char *p = msg; *p; p++) {
+        while (!(BT_UART->SR & USART_SR_TXE)) { }
+        BT_UART->DR = (uint8_t)*p;
+    }
+    while (!(BT_UART->SR & USART_SR_TC)) { }
+    printf("UART4: da gui \"HC-05 OK\" qua A0\r\n");
 }
 
 void Bluetooth_Send(const char *s)
