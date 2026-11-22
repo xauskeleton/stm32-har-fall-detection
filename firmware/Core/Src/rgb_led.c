@@ -24,8 +24,9 @@ static void init_pin(GPIO_TypeDef *port, uint16_t pin)
 void RGB_Init(void)
 {
     __HAL_RCC_GPIOB_CLK_ENABLE();
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-    /* PB4 mac dinh la chan JTAG NJTRST - doi sang GPIO van nap/debug SWD binh thuong */
+    /* PB3 (SWO) va PB4 (NJTRST) mac dinh la chan JTAG. Nap/debug SWD chi can
+     * PA13/PA14 nen doi sang GPIO van binh thuong; chi mat SWV trace qua SWO,
+     * ma du an in log qua USART1 nen khong dung SWV. */
     init_pin(RGB_R_PORT, RGB_R_PIN);
     init_pin(RGB_G_PORT, RGB_G_PIN);
     init_pin(RGB_B_PORT, RGB_B_PIN);

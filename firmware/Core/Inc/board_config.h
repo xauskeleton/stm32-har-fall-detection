@@ -45,8 +45,8 @@
 #define RGB_R_PIN           GPIO_PIN_4
 #define RGB_G_PORT          GPIOB    /* J3 chan 5 */
 #define RGB_G_PIN           GPIO_PIN_5
-#define RGB_B_PORT          GPIOC    /* J3 chan 15 */
-#define RGB_B_PIN           GPIO_PIN_8
+#define RGB_B_PORT          GPIOB    /* J3 chan 7 - ba chan R/G/B lien nhau tren J3 */
+#define RGB_B_PIN           GPIO_PIN_3
 #define RGB_BLINK_MS        250u     /* nhip nhay do khi te nga */
 
 /* ---- Bluetooth HC-05 qua USART2, nguon bat/tat bang 1 GPIO de tiet kiem pin.
