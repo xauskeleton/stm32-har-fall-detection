@@ -9,9 +9,9 @@ Nguồn sự thật là `firmware/Core/Inc/board_config.h` và `firmware/test.io
 |---|---|---|---|---|
 | Còi chủ động | + | J3 chân 13 (A8) | PA8 | Output, mức 1 = kêu |
 | | − | GND | | |
-| LED RGB (cực âm chung) | Xanh lá | J3 chân 5 (B5) | PB5 | Mỗi màu qua điện trở 220–330 Ω, ghi 1 = sáng |
-| | Đỏ | J3 chân 6 (B4) | PB4 | |
-| | Xanh dương | J3 chân 7 (B3) | PB3 | |
+| LED RGB (cực âm chung) | Đỏ | J3 chân 7 (B3) | PB3 | Mỗi màu qua điện trở 220–330 Ω, ghi 1 = sáng |
+| | Xanh lá | J3 chân 6 (B4) | PB4 | |
+| | Xanh dương | J3 chân 5 (B5) | PB5 | |
 | | Chân chung | GND | | |
 | Bluetooth HC-05 | VCC | Header trái, B1 | PB1 | Output mức 1 = bật HC-05. Cấp thẳng từ GPIO chỉ để thử |
 | | RXD | Header trái, A0 | PA0 | UART4_TX, 9600 baud |

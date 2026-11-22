@@ -48,12 +48,12 @@
  * 5 LED PC1..PC5 tren board khong dung nua (MX_GPIO_Init van giu chung o muc 1 = tat).
  * Moi chan mau phai co tro noi tiep ~220-330R.
  * KHONG dung PC13..PC15: datasheet cam dung 3 chan nay cap dong cho LED. */
-#define RGB_R_PORT          GPIOB    /* J3 chan 6 */
-#define RGB_R_PIN           GPIO_PIN_4
-#define RGB_G_PORT          GPIOB    /* J3 chan 5 */
-#define RGB_G_PIN           GPIO_PIN_5
-#define RGB_B_PORT          GPIOB    /* J3 chan 7 - ba chan R/G/B lien nhau tren J3 */
-#define RGB_B_PIN           GPIO_PIN_3
+#define RGB_R_PORT          GPIOB    /* J3 chan 7 */
+#define RGB_R_PIN           GPIO_PIN_3
+#define RGB_G_PORT          GPIOB    /* J3 chan 6 */
+#define RGB_G_PIN           GPIO_PIN_4
+#define RGB_B_PORT          GPIOB    /* J3 chan 5 */
+#define RGB_B_PIN           GPIO_PIN_5
 #define RGB_BLINK_MS        250u     /* nhip nhay do khi sap het pin */
 
 /* ---- Bluetooth HC-05 qua UART4, nguon bat/tat bang 1 GPIO de tiet kiem pin.
