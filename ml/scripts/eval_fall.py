@@ -10,8 +10,8 @@ Chay 2 lan de tach nguyen nhan:
   model  : nap nhan do bo phan loai ra  -> chenh lech so voi oracle la do BO PHAN LOAI
 
 Chay:
-    python scripts/eval_fall.py
-    python scripts/eval_fall.py --rule labels    # bo qua nguong soc gia toc
+    python ml/scripts/eval_fall.py
+    python ml/scripts/eval_fall.py --rule labels    # bo qua nguong soc gia toc
 """
 import argparse
 import os
@@ -55,7 +55,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--data', default=None)
     ap.add_argument('--cache', default=None)
-    ap.add_argument('--models', default='models')
+    ap.add_argument('--models', default=har_model.DEFAULT_DIR)
     ap.add_argument('--rule', default=None, choices=['both', 'any', 'labels'])
     args = ap.parse_args()
 

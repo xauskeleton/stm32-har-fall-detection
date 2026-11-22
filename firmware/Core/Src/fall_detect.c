@@ -1,9 +1,9 @@
-/* Xem fall_detect.h. BAN SAO 1-1 cua har/fall.py FallDetector.update().
+/* Xem fall_detect.h. BAN SAO 1-1 cua ml/har/fall.py FallDetector.update().
  * Sua mot ben thi PHAI sua ben kia. Nguong nam trong model_params.h (sinh tu Python).
  */
 #include "fall_detect.h"
 
-/* Nhom nhan - khop har/config.py */
+/* Nhom nhan - khop ml/har/config.py */
 static int is_active(int label)      /* chua nam */
 {
     return label >= HAR_WALKING && label <= HAR_STANDING;    /* 1..5 */

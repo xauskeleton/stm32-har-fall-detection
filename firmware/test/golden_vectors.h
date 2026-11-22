@@ -1,4 +1,4 @@
-/* SINH TU DONG boi scripts/export_model.py - KHONG SUA TAY.
+/* SINH TU DONG boi ml/scripts/export_model.py - KHONG SUA TAY.
  *
  * Doi chieu C voi Python. Nap GOLDEN_ACC/GOLDEN_GYRO vao duong ong streaming,
  * so ket qua voi GOLDEN_FEATURES va GOLDEN_LABELS.

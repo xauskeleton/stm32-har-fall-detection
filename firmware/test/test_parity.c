@@ -1,4 +1,4 @@
-/* Doi chieu C voi Python bang golden_vectors.h (sinh tu scripts/export_model.py).
+/* Doi chieu C voi Python bang golden_vectors.h (sinh tu ml/scripts/export_model.py).
  *
  * TIEU CHI CHINH la NHAN: phai khop TUNG cua so. Sai so dac trung chi de chan doan;
  * GOLDEN_TOL la so DO THUC TE, khong phai muc tieu (xem docs/DECISIONS.md muc 7).

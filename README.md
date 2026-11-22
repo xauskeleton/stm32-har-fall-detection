@@ -78,7 +78,7 @@ ICM-20948 @ 50 Hz  →  ax ay az gx gy gz (đơn vị g và rad/s)
     maxInds meanFreq + 7 góc gravity    │
         │                               │
         ▼                               │
- RFE giữ 160 cột (models/selected.json) │
+ RFE giữ 160 cột (ml/models/selected.json) │
         │                               │
         ▼                               │
  Chuẩn hoá Z-score (StandardScaler)     │
@@ -114,18 +114,19 @@ luôn đi qua `STAND_TO_LIE` / `SIT_TO_LIE`; té ngã thì nhảy thẳng từ `
 ## Cấu trúc
 
 ```
-har/                    thư viện Python dùng chung
-  config.py             hằng số DSP, 12 nhãn, chia train/test theo người
-  dsp.py                median 3, lowpass 20 Hz, tách gravity, jerk, 516 đặc trưng
-  dataset.py            đọc HAPT RawData, Phyphox CSV, log UART, ground truth
-  fall.py               state machine té ngã (bản tham chiếu của fall_detect.c)
-  model.py              chọn cột + scaler + clf, đánh giá, lưu/nạp bundle
-  export_c.py           sinh code C từ model đã huấn luyện
-scripts/
-  train.py              RFE (chỉ trên người train) + huấn luyện, lưu models/
-  eval_fall.py          đo báo động té ngã sai trên toàn bộ HAPT
-  export_model.py       sinh firmware/.../model_params.*
-models/                 selected.json (160 cột), scaler.pkl, classifier.pkl, meta.json
+ml/                     phần mềm Python: huấn luyện mô hình, sinh code C
+  har/                  thư viện Python dùng chung
+    config.py           hằng số DSP, 12 nhãn, chia train/test theo người
+    dsp.py              median 3, lowpass 20 Hz, tách gravity, jerk, 516 đặc trưng
+    dataset.py          đọc HAPT RawData, Phyphox CSV, log UART, ground truth
+    fall.py             state machine té ngã (bản tham chiếu của fall_detect.c)
+    model.py            chọn cột + scaler + clf, đánh giá, lưu/nạp bundle
+    export_c.py         sinh code C từ model đã huấn luyện
+  scripts/
+    train.py            RFE (chỉ trên người train) + huấn luyện, lưu ml/models/
+    eval_fall.py        đo báo động té ngã sai trên toàn bộ HAPT
+    export_model.py     sinh firmware/.../model_params.*
+  models/               selected.json (160 cột), scaler.pkl, classifier.pkl, meta.json
 firmware/               sinh tự động — KHÔNG sửa tay
   Core/Inc/model_params.h    hằng số, ngưỡng, khai báo extern
   Core/Src/model_params.c    biquad, ZI, HAR_BANDS, HAR_SELECTED, scaler, ma trận 12×160
@@ -133,7 +134,7 @@ firmware/               sinh tự động — KHÔNG sửa tay
   Core/Src/har_features.c    516 đặc trưng                                         (viết tay)
   Core/Src/har_classifier.c  chọn cột + chuẩn hoá + nhân ma trận + argmax          (viết tay)
   Core/Src/har_pipeline.c    ring buffer, chạy mỗi 64 mẫu mới                      (viết tay)
-  Core/Src/fall_detect.c     bản sao của har/fall.py                               (viết tay)
+  Core/Src/fall_detect.c     bản sao của ml/har/fall.py                            (viết tay)
   Core/Src/har_app.c         hoán vị trục + kẹp tín hiệu, không phụ thuộc HAL      (viết tay)
   test/test_parity.c         đối chiếu C vs Python, make -C firmware test          (viết tay)
 docs/
@@ -148,7 +149,7 @@ docs/
 pip install -r requirements.txt
 ```
 
-Model đã huấn luyện sẵn nằm trong `models/`, dùng được ngay không cần train lại.
+Model đã huấn luyện sẵn nằm trong `ml/models/`, dùng được ngay không cần train lại.
 
 ## Dữ liệu
 
@@ -158,7 +159,7 @@ từ [bản gốc trên UCI](https://archive.ics.uci.edu/dataset/341/):
 ```bash
 export HAPT_RAWDATA=/đường/dẫn/tới/RawData
 # hoặc
-python scripts/train.py --data /đường/dẫn/tới/RawData
+python ml/scripts/train.py --data /đường/dẫn/tới/RawData
 ```
 
 `har.dataset.find_rawdata()` tự dò các vị trí quen thuộc.
@@ -174,16 +175,16 @@ Nếu đổi dữ liệu thì **xoá `data_raw/hapt_raw.npz`** — cache giữ t
 
 ```bash
 # Huấn luyện lại
-python scripts/train.py
+python ml/scripts/train.py
 
 # Đo báo động té ngã sai trên toàn bộ HAPT
-python scripts/eval_fall.py
+python ml/scripts/eval_fall.py
 
 # Sinh code C cho firmware
-python scripts/export_model.py
+python ml/scripts/export_model.py
 
 # Thêm --cache để lần sau đọc dữ liệu nhanh hơn nhiều (60 s -> 1 s)
-python scripts/train.py --cache hapt_raw.npz
+python ml/scripts/train.py --cache hapt_raw.npz
 ```
 
 Code cố định vào đúng cấu hình đã chốt — không còn cờ bật/tắt để thí nghiệm. Số liệu của các

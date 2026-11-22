@@ -1,9 +1,9 @@
 """
-Sinh code C tu models/ -> firmware/Core/{Inc,Src}/model_params.* + test/golden_vectors.h
+Sinh code C tu ml/models/ -> firmware/Core/{Inc,Src}/model_params.* + test/golden_vectors.h
 
 Chay:
-    python scripts/export_model.py
-    python scripts/export_model.py --golden acc.txt gyro.txt   # doi chieu tu file do tay
+    python ml/scripts/export_model.py
+    python ml/scripts/export_model.py --golden acc.txt gyro.txt   # doi chieu tu file do tay
 
 Golden vectors (du lieu doi chieu C vs Python) CHI sinh tu tin hieu THAT:
   1. --golden <acc> <gyro>   neu co
@@ -40,8 +40,8 @@ def pick_golden(args):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--models', default='models')
-    ap.add_argument('--out', default='firmware')
+    ap.add_argument('--models', default=har_model.DEFAULT_DIR)
+    ap.add_argument('--out', default=os.path.normpath(os.path.join(har_model.DEFAULT_DIR, '..', '..', 'firmware')))
     ap.add_argument('--data', default=None, help='duong dan HAPT RawData')
     ap.add_argument('--golden', nargs=2, metavar=('ACC', 'GYRO'), default=None)
     # 385 = 5 cua so tron (0..383) + 1 mau de median 3 streaming xuat duoc chi so 383
@@ -50,7 +50,7 @@ def main():
 
     scaler, clf, cols, meta = har_model.load_bundle(args.models)
     if not meta:
-        raise SystemExit('Thieu models/meta.json - chay scripts/train.py truoc')
+        raise SystemExit('Thieu ml/models/meta.json - chay ml/scripts/train.py truoc')
 
     print('Model : %s | giu %d / %d dac trung | %d tham so'
           % (meta['arch'], meta['n_features'], meta['n_features_all'], meta['params']))
@@ -65,7 +65,7 @@ def main():
     if golden is None:
         print('  %-44s %6s' % (os.path.join(args.out, 'test', 'golden_vectors.h'),
                                'giu nguyen'))
-    print('\nKHONG SUA TAY cac file tren. Sua har/export_c.py roi chay lai.')
+    print('\nKHONG SUA TAY cac file tren. Sua ml/har/export_c.py roi chay lai.')
 
 
 if __name__ == '__main__':

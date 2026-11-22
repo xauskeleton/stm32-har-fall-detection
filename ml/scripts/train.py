@@ -5,8 +5,8 @@ Chia train/test theo NGUOI, dung split chinh thuc cua HAPT: 21 nguoi train, 9 ng
 RFE chi chay tren tap train.
 
 Chay:
-    python scripts/train.py
-    python scripts/train.py --data /duong/dan/RawData --cache hapt_raw.npz
+    python ml/scripts/train.py
+    python ml/scripts/train.py --data /duong/dan/RawData --cache hapt_raw.npz
 """
 import argparse
 import os
@@ -25,7 +25,7 @@ from har import dataset, dsp, model as har_model
 ap = argparse.ArgumentParser()
 ap.add_argument('--data', default=None, help='duong dan HAPT RawData')
 ap.add_argument('--cache', default=None, help='file .npz cache tin hieu raw')
-ap.add_argument('--out', default='models')
+ap.add_argument('--out', default=har_model.DEFAULT_DIR)
 ap.add_argument('-C', type=float, default=cfg.LOGREG_C)
 ap.add_argument('-k', type=int, default=cfg.N_FEATURES)
 args = ap.parse_args()

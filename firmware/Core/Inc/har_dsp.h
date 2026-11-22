@@ -1,6 +1,6 @@
 /* Khoi DSP: median 3, cascade biquad, FFT 128 diem -> pho 64 bin.
  *
- * Ban tham chieu Python: har/dsp.py. Da doi chieu tren 3162 cua so tap test:
+ * Ban tham chieu Python: ml/har/dsp.py. Da doi chieu tren 3162 cua so tap test:
  * 0 cua so lech nhan, sai so dac trung lon nhat 0.248 (xem docs/DECISIONS.md muc 7).
  *
  * Toan bo dung float, KHONG dung double: FPU cua Cortex-M4 chi co single precision.
@@ -11,12 +11,12 @@
 #include "model_params.h"
 
 /* ---- median 3, dang streaming, TRE 1 MAU ----
- * har/dsp.py median3() can ca mau truoc va mau sau, nen ban streaming chi xuat duoc
+ * ml/har/dsp.py median3() can ca mau truoc va mau sau, nen ban streaming chi xuat duoc
  * mau thu k sau khi da nhan mau k+1. Cu the:
  *     push mau 0  -> chua co gi          (tra ve 0)
  *     push mau 1  -> xuat chi so 0 = x[0]            (giu nguyen, nhu Python)
  *     push mau k  -> xuat chi so k-1 = median(x[k-2], x[k-1], x[k])
- * Nho quy uoc nay chuoi ra TRUNG KHOP TUNG BIT voi har/dsp.py median3().
+ * Nho quy uoc nay chuoi ra TRUNG KHOP TUNG BIT voi ml/har/dsp.py median3().
  */
 typedef struct {
     float a, b;      /* 2 mau gan nhat */

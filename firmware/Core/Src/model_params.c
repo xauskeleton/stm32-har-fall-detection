@@ -1,4 +1,4 @@
-/* SINH TU DONG boi scripts/export_model.py - KHONG SUA TAY. */
+/* SINH TU DONG boi ml/scripts/export_model.py - KHONG SUA TAY. */
 #include "model_params.h"
 
 /* Butterworth bac 3, fs = 50 Hz, dang second-order sections */

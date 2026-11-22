@@ -35,7 +35,7 @@ WINDOW_PERIOD = cfg.STEP / cfg.FS
 
 @dataclass(frozen=True)
 class FallParams:
-    """Tat ca nguong. scripts/export_model.py ghi nguyen bo nay sang C dang #define."""
+    """Tat ca nguong. ml/scripts/export_model.py ghi nguyen bo nay sang C dang #define."""
     freefall_g: float = 0.60     # |a| tut duoi muc nay -> dang roi tu do
     impact_g: float = 2.20       # |a| vot qua muc nay  -> cu dap xuong san
 

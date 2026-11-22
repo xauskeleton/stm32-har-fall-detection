@@ -1,4 +1,4 @@
-/* SINH TU DONG boi scripts/export_model.py ngay 2026-09-25 - KHONG SUA TAY.
+/* SINH TU DONG boi ml/scripts/export_model.py ngay 2026-09-25 - KHONG SUA TAY.
  *
  * Model : logreg 160-12, accuracy 93.23% tren tap test 9 nguoi chua tung thay
  * Nhom  : body_acc, gravity, body_acc_jerk, gyro, gyro_jerk

@@ -2,7 +2,7 @@
 
 ## Đã xong — Python
 
-**Thư viện** (`har/`) — cố định vào đúng cấu hình đã chốt, không còn núm điều khiển thí nghiệm:
+**Thư viện** (`ml/har/`) — cố định vào đúng cấu hình đã chốt, không còn núm điều khiển thí nghiệm:
 
 - `config.py` — hằng số DSP, cấu trúc 516 đặc trưng, 12 nhãn, chia train/test theo người
 - `dsp.py` — median 3, lowpass 20 Hz, tách gravity 0,3 Hz, jerk (sai phân **lùi**), cắt cửa sổ,
@@ -30,14 +30,14 @@ Toàn bộ `float`, không `malloc` trong đường chạy, biên dịch `-Wall 
 **0 warning**. Đối chiếu với Python trên toàn bộ tập test: **0 / 3.156 cửa sổ lệch nhãn**,
 accuracy giống hệt (91,73% cả hai — xem `DECISIONS.md` mục 7 về con số này).
 
-- [x] `har_dsp.c` — median 3 streaming (trễ 1 mẫu, khớp bit với `har/dsp.py`), cascade biquad
+- [x] `har_dsp.c` — median 3 streaming (trễ 1 mẫu, khớp bit với `ml/har/dsp.py`), cascade biquad
       DF2T với state khởi tạo về xác lập, FFT radix-2 128 điểm tự viết, 14 phép thống kê
       (`iqr` quy ước MATLAB, `entropy` 256 ô cố định, `burg` AR bậc 4, …)
-- [x] `har_features.c` — 516 đặc trưng, thứ tự khớp `har/dsp.py extract_features()`
+- [x] `har_features.c` — 516 đặc trưng, thứ tự khớp `ml/har/dsp.py extract_features()`
 - [x] `har_classifier.c` — chọn cột theo `HAR_SELECTED` → chuẩn hoá → nhân ma trận 160×12 → argmax
 - [x] `har_pipeline.c` — ring buffer 5 nhóm × 3 trục × 128 mẫu, chạy mỗi 64 mẫu mới, giữ state
       bộ lọc qua các mẫu
-- [x] `fall_detect.c` — bản sao 1-1 của `har/fall.py`, có cả `upright_min`
+- [x] `fall_detect.c` — bản sao 1-1 của `ml/har/fall.py`, có cả `upright_min`
 - [x] `test/test_parity.c` + `Makefile` — `make -C firmware test`, tiêu chí ĐẠT là **nhãn khớp
       từng cửa sổ**; `GOLDEN_TOL = 0.3` chỉ để chẩn đoán
 
@@ -91,10 +91,10 @@ chạy trên board.**
 
 ## Chưa làm — phần Python
 
-- [ ] `scripts/infer_file.py` — suy luận offline trên file đo tay + chạy state machine té ngã,
+- [ ] `ml/scripts/infer_file.py` — suy luận offline trên file đo tay + chạy state machine té ngã,
       in chuỗi nhãn theo thời gian và sự kiện té ngã
 - [ ] Copy vài sample đo tay từ `../DSP/test/my_samples/` sang `test/my_samples/`
-- [ ] Sửa `har/fall.py` nhánh chết trong `STATE_IDLE`: `_laying` tối đa bằng 1 nhưng so với
+- [ ] Sửa `ml/har/fall.py` nhánh chết trong `STATE_IDLE`: `_laying` tối đa bằng 1 nhưng so với
       `laying_confirm = 2` nên không bao giờ đúng. Quyết định bỏ hay sửa.
 
 ## Câu hỏi còn treo

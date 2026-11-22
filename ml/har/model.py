@@ -24,7 +24,8 @@ from sklearn.metrics import (accuracy_score, classification_report,
 
 from . import config as cfg
 
-DEFAULT_DIR = 'models'
+# ml/models, tinh tu vi tri file nay nen chay script tu thu muc nao cung dung
+DEFAULT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'models')
 
 # 4 nhan chuyen tu the lien quan den nam - bo phat hien te nga song nho chung,
 # nen day la chi so QUYET DINH khi so cac phuong an.

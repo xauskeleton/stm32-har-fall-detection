@@ -6,7 +6,7 @@ Xuat ra:
   firmware/Core/Src/model_params.c   - toan bo so lieu
   firmware/test/golden_vectors.h     - du lieu doi chieu C vs Python
 
-KHONG SUA TAY 3 file tren. Sua o day roi chay lai scripts/export_model.py.
+KHONG SUA TAY 3 file tren. Sua o day roi chay lai ml/scripts/export_model.py.
 
 Moi so ghi bang %.9g + hau to 'f' -> float32, dung kieu ma Cortex-M4F dung
 (FPU chi co single precision, xem docs/DECISIONS.md muc 6).
@@ -62,7 +62,7 @@ def _arr2_int(name, mat, ctype='uint8_t'):
     return '\n'.join(out + ['};'])
 
 
-_HEADER = '''/* SINH TU DONG boi scripts/export_model.py ngay {date} - KHONG SUA TAY.
+_HEADER = '''/* SINH TU DONG boi ml/scripts/export_model.py ngay {date} - KHONG SUA TAY.
  *
  * Model : {arch}, accuracy {acc:.2f}% tren tap test 9 nguoi chua tung thay
  * Nhom  : {signals}
@@ -142,7 +142,7 @@ const char *har_label_name(int label);
 #endif /* MODEL_PARAMS_H */
 '''
 
-_SOURCE = '''/* SINH TU DONG boi scripts/export_model.py - KHONG SUA TAY. */
+_SOURCE = '''/* SINH TU DONG boi ml/scripts/export_model.py - KHONG SUA TAY. */
 #include "model_params.h"
 
 /* Butterworth bac {order}, fs = {fs} Hz, dang second-order sections */
@@ -181,7 +181,7 @@ const char *har_label_name(int label)
 }}
 '''
 
-_GOLDEN = '''/* SINH TU DONG boi scripts/export_model.py - KHONG SUA TAY.
+_GOLDEN = '''/* SINH TU DONG boi ml/scripts/export_model.py - KHONG SUA TAY.
  *
  * Doi chieu C voi Python. Nap GOLDEN_ACC/GOLDEN_GYRO vao duong ong streaming,
  * so ket qua voi GOLDEN_FEATURES va GOLDEN_LABELS.

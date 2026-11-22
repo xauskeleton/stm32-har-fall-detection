@@ -81,7 +81,7 @@ Té ngã             :  WALKING/STANDING -> (không có nhãn transition) -> LAY
                       kèm một cú sốc gia tốc
 ```
 
-Đo bằng `scripts/eval_fall.py` trên **toàn bộ 61 experiment liên tục (372,3 phút,
+Đo bằng `ml/scripts/eval_fall.py` trên **toàn bộ 61 experiment liên tục (372,3 phút,
 17.453 cửa sổ)**. HAPT không có té ngã nên **mọi** sự kiện FALL đều là báo nhầm.
 
 | nguồn nhãn | báo nhầm |
@@ -120,7 +120,7 @@ chạy độc lập với nhánh chuỗi nhãn, kiểm bằng chuỗi giả lậ
 Bài học chung: **F1 mức cửa sổ không phải chỉ số triển khai.** Model 160 thắng ở cả accuracy,
 macro-F1 và F1 4 nhãn ngã nhưng vẫn làm state machine đầu-cuối xấu đi. Phải đo đầu-cuối.
 
-`har/fall.py` và `firmware/Core/Src/fall_detect.c` là bản sao của nhau.
+`ml/har/fall.py` và `firmware/Core/Src/fall_detect.c` là bản sao của nhau.
 
 ---
 
@@ -181,7 +181,7 @@ trưng tự tính từ `Inertial Signals/` của bộ UCI HAR gốc (chính là 
 giả**). `X_*.txt` chuẩn hoá min-max theo cột, mà min-max là phép affine tăng dần, nên
 **|r| = 1,000000 nghĩa là công thức khớp tuyệt đối**.
 
-`har/dsp.py` đạt **|r| = 1,000000 ở cả 15 phép**: `mad`, `iqr`, `entropy`, `arCoeff` ×4,
+`ml/har/dsp.py` đạt **|r| = 1,000000 ở cả 15 phép**: `mad`, `iqr`, `entropy`, `arCoeff` ×4,
 `correlation`, và 8 phép miền tần số. Ba chỗ `features_info.txt` nói mơ hồ, đo ra được:
 
 | chỗ mơ hồ | đáp án |
@@ -235,8 +235,8 @@ hơn thì k = 120 (5,7 KB) là lựa chọn có số liệu đỡ lưng, mất ~
 k = 40 mất 7,5 F1 ngã (2/7 fold), k = 20 mất 17,7 (0/7).
 
 RFE chạy **chỉ trên tập train**. Danh sách cột là **số liệu phụ thuộc dữ liệu** — nằm trong
-`models/selected.json`, được `scripts/export_model.py` sinh sang C, không viết tay vào
-`har/config.py`.
+`ml/models/selected.json`, được `ml/scripts/export_model.py` sinh sang C, không viết tay vào
+`ml/har/config.py`.
 
 ### 160 cột được chọn nói gì
 
@@ -386,7 +386,7 @@ còn 1. Trong 27 tổ hợp `upright_min × laying_confirm × impact_g`, **14 t�
 sau median tương đương đỉnh thật ~2,4 g. Té ngã thật ở thắt lưng thường 3–6 g nên vẫn còn khoảng
 dự trữ, nhưng con số 3–6 g lấy từ tài liệu, không phải đo trên thiết bị này.
 
-Muốn quay lại `impact_g = 2,0` thì sửa một dòng trong `har/fall.py`, đổi lại nhận 2 báo động sai
+Muốn quay lại `impact_g = 2,0` thì sửa một dòng trong `ml/har/fall.py`, đổi lại nhận 2 báo động sai
 trên 372 phút (1 lần / 3,1 giờ).
 
 **Bài học vẫn giữ:** F1 mức cửa sổ **không phải** chỉ số triển khai. Cấu hình này thắng 6/7 fold
@@ -435,7 +435,7 @@ Bộ lọc 0,3 Hz có thời gian xác lập dài. Nếu state bắt đầu từ
 Sai > 0,01 g kéo dài **4,4 s đầu → 4 cửa sổ đầu tiên sai nhãn**. Trên HAPT thì 4/10.929 cửa sổ
 không ảnh hưởng số liệu, nhưng trên board thì đó là **mỗi lần cấp điện hoặc reset**.
 
-`har/dsp.py` khởi tạo state về trạng thái xác lập theo mẫu đầu tiên (`sosfilt_zi * acc[0]`) —
+`ml/har/dsp.py` khởi tạo state về trạng thái xác lập theo mẫu đầu tiên (`sosfilt_zi * acc[0]`) —
 2 dòng, và **firmware phải làm y hệt**, nếu không thì Python và C lệch nhau ở 4 cửa sổ đầu.
 
 ---
@@ -457,7 +457,7 @@ mẫu **tương lai** `x[n+1]` để tính được mẫu `n`. Đó là non-caus
 `filtfilt`, và nó chỉ lộ ra khi viết bản C streaming: pipeline streaming tự nhiên dùng sai phân
 lùi, làm `jerk` **lệch 1 mẫu** so với Python → `f_body_acc_jerk_y_mean_freq` sai 1,03 (10%).
 
-Đã đổi `har/dsp.py deriv()` sang **sai phân lùi** `jerk[n] = (x[n] − x[n−1]) · fs`, mẫu đầu = 0
+Đã đổi `ml/har/dsp.py deriv()` sang **sai phân lùi** `jerk[n] = (x[n] − x[n−1]) · fs`, mẫu đầu = 0
 — đúng công thức mà `har_pipeline.c` tính được mà không cần đệm thêm mẫu nào. Accuracy không
 đổi đáng kể (93,20% → **93,23%**), và đổi lại pipeline hết non-causal hoàn toàn.
 
@@ -661,7 +661,7 @@ Ngưỡng `impact_g = 2,0 g` **chưa bao giờ** bị vượt ở hệ số ≥ 
 Ghi lại ở đây để không ai dùng nhầm bảng số này làm tỷ lệ phát hiện té ngã.
 
 `../DSP/test/my_samples/chuoi_nga.gt.txt` — dù tên là "chuỗi ngã" — có ground truth ghi
-`23.00 24.00 STAND_TO_LIE`, tức nằm xuống **chủ động**. Theo đúng logic `har/fall.py` thì
+`23.00 24.00 STAND_TO_LIE`, tức nằm xuống **chủ động**. Theo đúng logic `ml/har/fall.py` thì
 `voluntary_guard` kích hoạt và state machine cố ý **không** báo động. Nên nó là **negative test
 case**, không phải positive.
 
