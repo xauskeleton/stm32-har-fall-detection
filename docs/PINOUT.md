@@ -49,15 +49,17 @@ Không còn dùng: PC1–PC5 (5 LED trên board, giữ ở mức tắt), PC10, P
 
 Tắt khi không dùng. Sáng 3 s lúc khởi động và khi nhấn KEY3.
 
-| Màu | Mức pin |
-|---|---|
-| Xanh lá | > 80% |
-| Xanh lá nhấp nháy chậm | 60–80% |
-| Vàng | 40–60% |
-| Vàng nhấp nháy chậm | 20–40% |
-| Đỏ | 10–20% |
-| Đỏ nhấp nháy nhanh | ≤ 10%, luôn báo kể cả khi không nhấn nút |
-| Xanh dương | Không cắm pin, chạy nguồn USB |
+Thang đo: 4,0 V = 0%, 7,6 V = 100%.
+
+| Màu | Mức pin | Điện áp |
+|---|---|---|
+| Xanh lá | > 80% | > 6,88 V |
+| Xanh lá nhấp nháy chậm | 60–80% | 6,16–6,88 V |
+| Vàng | 40–60% | 5,44–6,16 V |
+| Vàng nhấp nháy chậm | 20–40% | 4,72–5,44 V |
+| Đỏ | ≤ 20% | 4,0–4,72 V |
+| Đỏ nhấp nháy nhanh | hết pin | < 4,0 V, luôn báo kể cả khi không nhấn nút |
+| Xanh dương | Không cắm pin, chạy nguồn USB | < 3,0 V |
 
 ## Chân còn trống trên header
 

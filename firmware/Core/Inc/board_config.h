@@ -15,21 +15,22 @@
 #define BAT_ADC_CHANNEL     5u
 #define BAT_DIVIDER         10.0f
 #define BAT_DIODE_V         0.40f    /* SS54 o dong nho; do bang dong ho roi chinh */
-#define BAT_FULL_V          8.40f    /* 4.2 V / cell */
-#define BAT_EMPTY_V         6.40f    /* 3.2 V / cell - khong xa pin thap hon muc nay */
-#define BAT_NONE_V          5.00f    /* duoi muc nay = khong cam pin, chi cap USB */
+#define BAT_FULL_V          7.60f    /* 100% */
+#define BAT_EMPTY_V         4.00f    /* 0%; duoi muc nay LED do nhay */
+#define BAT_NONE_V          3.00f    /* duoi muc nay = khong cam pin, chi cap USB
+                                      * PHAI do lai: cap USB, khong cam pin, xem UART in bao nhieu V */
 #define BAT_MEASURE_MS      500u     /* chu ky do pin */
 #define BAT_SHOW_MS         3000u    /* nhan nut thi LED RGB bao pin trong 3 s */
-/* Mau LED RGB theo % pin - 6 muc, "nhay" = nhay cham BAT_BLINK_SLOW_MS:
- *   > 80%   xanh la            60..80%  xanh la nhay
- *   40..60% vang               20..40%  vang nhay
- *   10..20% do                 <= 10%   do nhay nhanh, LUON bao ke ca khi khong nhan nut
- *   khong cam pin (chi USB)    xanh duong */
+/* Mau LED RGB theo % pin (4.0 V = 0%, 7.6 V = 100%), "nhay" = nhay cham BAT_BLINK_SLOW_MS:
+ *   > 80%  (> 6.88 V)   xanh la          60..80%  xanh la nhay
+ *   40..60%             vang             20..40%  vang nhay
+ *   <= 20% (4.0..4.72 V) do
+ *   < 4.0 V             do nhay nhanh, LUON bao ke ca khi khong nhan nut
+ *   khong cam pin (chi USB)  xanh duong */
 #define BAT_PCT_FULL        80u
 #define BAT_PCT_GOOD        60u
 #define BAT_PCT_HALF        40u
 #define BAT_PCT_LOW         20u
-#define BAT_PCT_EMPTY       10u
 #define BAT_BLINK_SLOW_MS   500u
 
 /* ---- Nut nhan: noi GND khi nhan, board KHONG co tro keo len -> bat pull-up trong chip */

@@ -84,7 +84,7 @@ static void refresh_leds(void)
     bool slow_on = ((now / BAT_BLINK_SLOW_MS) & 1u) == 0u;
     bool present = bat_v >= BAT_NONE_V;
 
-    if (present && bat_pct <= BAT_PCT_EMPTY) {
+    if (present && bat_v < BAT_EMPTY_V) {
         RGB_Set(fast_on ? RGB_RED : RGB_OFF);       /* sap het pin: bao ca khi khong nhan nut */
     } else if (!showing) {
         RGB_Set(RGB_OFF);

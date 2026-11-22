@@ -1,6 +1,6 @@
 /* Do pin 2S qua PA5 va bao muc pin bang mau LED RGB (bang mau trong board_config.h).
  * Binh thuong LED tat de tiet kiem pin; goi Battery_Show() thi sang 3 s.
- * Duoi BAT_PCT_EMPTY thi nhay do lien tuc, khong can nhan nut.
+ * Duoi BAT_EMPTY_V (4.0 V) thi nhay do lien tuc, khong can nhan nut.
  */
 #ifndef BATTERY_H
 #define BATTERY_H
