@@ -34,10 +34,8 @@
 #define BAT_BLINK_SLOW_MS   500u
 
 /* ---- Nut nhan: noi GND khi nhan, board KHONG co tro keo len -> bat pull-up trong chip */
-#define BTN_BAT_PORT        GPIOC    /* X1 = KEY3: xem pin */
-#define BTN_BAT_PIN         GPIO_PIN_11
-#define BTN_BAT2_PORT       GPIOC    /* nut tron tren hop, song song X2 = KEY1: cung xem pin */
-#define BTN_BAT2_PIN        GPIO_PIN_9
+#define BTN_BAT_PORT        GPIOC    /* X2 = KEY1, song song nut tron tren hop: xem pin */
+#define BTN_BAT_PIN         GPIO_PIN_9
 #define BTN_DEBOUNCE_MS     30u
 
 /* ---- Coi chu dong: chan + vao PA8 (J3 chan 13), chan - vao GND */

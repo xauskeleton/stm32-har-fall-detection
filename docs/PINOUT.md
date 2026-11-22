@@ -22,7 +22,7 @@ trong CubeMX.
 | | RXD | Header trái, A0 | PA0 | UART4_TX, 9600 baud |
 | | TXD | Header trái, A1 | PA1 | UART4_RX |
 | | GND | GND | | |
-| Nút tròn ngoài hộp | 1 đầu | J3 chân 14 (C9) | PC9 | Input pull-up, nối song song KEY1. Nhấn = xem pin (như KEY3) |
+| Nút tròn ngoài hộp | 1 đầu | J3 chân 14 (C9) | PC9 | Input pull-up, nối song song KEY1. Nhấn = LED RGB báo pin 3 s + bật Bluetooth 30 s |
 | | Đầu kia | GND | | |
 | Pin | | Cổng XT60 | | Mạch đo có sẵn trên board. Thang báo pin đang đặt 4,0–7,6 V (xem dưới) |
 
@@ -35,12 +35,11 @@ Nối UART phải bắt chéo: TX của STM32 vào RXD của HC-05, RX của STM
 | PB8 / PB9 | I2C1 SCL / SDA | ICM-20948, 400 kHz, địa chỉ 0x68, ±4 g / ±1000 dps |
 | PA9 / PA10 | USART1 TX / RX | Cổng USB UART, 115200 baud, in log |
 | PA5 | ADC1 kênh 5 | Đo điện áp pin qua mạch chia 10 lần + diode SS54 |
-| PC11 | Nút KEY3 (X1) | Input pull-up. Nhấn = LED RGB báo pin 3 s + bật Bluetooth 30 s |
-| PC9 | Nút KEY1 (X2) | Input pull-up. Nhấn = xem pin (như KEY3) |
+| PC9 | Nút KEY1 (X2) | Input pull-up, song song nút ngoài hộp. Nhấn = xem pin |
 | PA13 / PA14 | SWDIO / SWCLK | Nạp code qua ST-Link — không dùng cho việc khác |
 | PH0 / PH1 | Thạch anh HSE | 8 MHz, PLL lên 180 MHz |
 
-Không còn dùng: PC1–PC5 (5 LED trên board, giữ ở mức tắt), PC10, PC12 (khai báo input, chưa dùng).
+Không còn dùng: PC1–PC5 (5 LED trên board, giữ ở mức tắt), PC10, PC11 (KEY3), PC12 (khai báo input, chưa dùng).
 
 ## Ngoại vi nội bộ
 
@@ -53,7 +52,7 @@ Không còn dùng: PC1–PC5 (5 LED trên board, giữ ở mức tắt), PC10, P
 ## LED RGB báo pin
 
 Lúc khởi động: tự kiểm tra đỏ → xanh lá → xanh dương (mỗi màu 0,4 s), rồi báo pin 3 s.
-Sau đó tắt, nhấn KEY3 hoặc nút ngoài hộp (KEY1) thì báo pin lại 3 s.
+Sau đó tắt, nhấn nút ngoài hộp hoặc KEY1 (PC9) thì báo pin lại 3 s.
 
 Thang đo: 4,0 V = 0%, 7,6 V = 100%.
 
