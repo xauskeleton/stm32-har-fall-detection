@@ -28,6 +28,7 @@
 #include "buzzer.h"
 #include "rgb_led.h"
 #include "buttons.h"
+#include "bluetooth.h"
 #include <math.h>
 #include <stdio.h>
 /* USER CODE END Includes */
@@ -125,6 +126,7 @@ int main(void)
   RGB_Init();
   Battery_Init();
   Battery_Show();          /* khoi dong: hien muc pin 3 s */
+  Bluetooth_Init();        /* HC-05 tat cho toi khi te nga hoac nhan nut pin */
 
   static button_t btn_bat  = BUTTON_INIT(BTN_BAT_PORT, BTN_BAT_PIN);
   static button_t btn_mute = BUTTON_INIT(BTN_MUTE_PORT, BTN_MUTE_PIN);
@@ -153,11 +155,16 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     /* --- ngoai vi: khong ham nao chan, de khong lo nhip lay mau 50 Hz --- */
-    if (Button_Pressed(&btn_bat))  Battery_Show();
+    if (Button_Pressed(&btn_bat)) {
+      Battery_Show();
+      Bluetooth_Wake(BT_HOLD_MS);                   /* bat HC-05 de dien thoai ket noi */
+    }
     if (Button_Pressed(&btn_mute)) Buzzer_Stop();   /* chi tat tieng, den do van nhay */
     Battery_Update();
     Buzzer_Update();
     RGB_Update(har_app_fall_state()->state, i2c_ok);
+    Bluetooth_Update(har_app_fall_state()->state,
+                     Battery_IsPresent() ? (int)Battery_GetPercent() : -1);
 
     /* --- in trang thai ra UART moi 2 giay --- */
     static uint32_t last_uart_time = 0;
