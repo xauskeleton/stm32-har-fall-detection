@@ -1,0 +1,66 @@
+# Sơ đồ chân — STM32F446RET6 (board STM32 F4 Study Kit)
+
+Nguồn sự thật là `firmware/Core/Inc/board_config.h` và `firmware/test.ioc`. Đổi chân thì sửa
+`board_config.h` rồi cập nhật lại file này.
+
+## Chân cần đi dây ra ngoài
+
+| Linh kiện | Chân linh kiện | Nối vào board | Chân MCU | Ghi chú |
+|---|---|---|---|---|
+| Còi chủ động | + | J3 chân 13 (A8) | PA8 | Output, mức 1 = kêu |
+| | − | GND | | |
+| LED RGB (cực âm chung) | Xanh lá | J3 chân 5 (B5) | PB5 | Mỗi màu qua điện trở 220–330 Ω, ghi 1 = sáng |
+| | Đỏ | J3 chân 6 (B4) | PB4 | |
+| | Xanh dương | J3 chân 7 (B3) | PB3 | |
+| | Chân chung | GND | | |
+| Bluetooth HC-05 | VCC | Header trái, B1 | PB1 | Output mức 1 = bật HC-05. Cấp thẳng từ GPIO chỉ để thử |
+| | RXD | Header trái, A0 | PA0 | UART4_TX, 9600 baud |
+| | TXD | Header trái, A1 | PA1 | UART4_RX |
+| | GND | GND | | |
+| Nút tròn ngoài hộp | 1 đầu | J3 chân 14 (C9) | PC9 | Input pull-up, nối song song KEY1. Nhấn = tắt còi |
+| | Đầu kia | GND | | |
+| Pin 2S (2 × 18650) | | Cổng XT60 | | Mạch đo có sẵn trên board |
+
+Nối UART phải bắt chéo: TX của STM32 vào RXD của HC-05, RX của STM32 vào TXD của HC-05.
+
+## Chân dùng phần cứng có sẵn trên board
+
+| Chân MCU | Chức năng | Ghi chú |
+|---|---|---|
+| PB8 / PB9 | I2C1 SCL / SDA | ICM-20948, 400 kHz, địa chỉ 0x68, ±4 g / ±1000 dps |
+| PA9 / PA10 | USART1 TX / RX | Cổng USB UART, 115200 baud, in log |
+| PA5 | ADC1 kênh 5 | Đo điện áp pin qua mạch chia 10 lần + diode SS54 |
+| PC11 | Nút KEY3 (X1) | Input pull-up. Nhấn = LED RGB báo pin 3 s + bật Bluetooth 30 s |
+| PC9 | Nút KEY1 (X2) | Input pull-up. Nhấn = tắt còi |
+| PA13 / PA14 | SWDIO / SWCLK | Nạp code qua ST-Link — không dùng cho việc khác |
+| PH0 / PH1 | Thạch anh HSE | 8 MHz, PLL lên 180 MHz |
+
+Không còn dùng: PC1–PC5 (5 LED trên board, giữ ở mức tắt), PC10, PC12 (khai báo input, chưa dùng).
+
+## Ngoại vi nội bộ
+
+| Ngoại vi | Cấu hình |
+|---|---|
+| TIM6 | Ngắt 20 ms = lấy mẫu 50 Hz (PSC 8999, ARR 199) |
+| UART4 | HC-05, chỉ bật clock khi HC-05 đang có nguồn |
+| ADC1 | Đọc bằng thanh ghi, trung bình 16 mẫu, chu kỳ 500 ms |
+
+## LED RGB báo pin
+
+Tắt khi không dùng. Sáng 3 s lúc khởi động và khi nhấn KEY3.
+
+| Màu | Mức pin |
+|---|---|
+| Xanh lá | > 80% |
+| Xanh lá nhấp nháy chậm | 60–80% |
+| Vàng | 40–60% |
+| Vàng nhấp nháy chậm | 20–40% |
+| Đỏ | 10–20% |
+| Đỏ nhấp nháy nhanh | ≤ 10%, luôn báo kể cả khi không nhấn nút |
+| Xanh dương | Không cắm pin, chạy nguồn USB |
+
+## Chân còn trống trên header
+
+A2, A3, A4, A6, A7, B0, B2, B10, C0, C4, C10, C12, B6, B7, D2, A15, C6, C7, B12–B15.
+
+Không dùng PC13–PC15 để cấp dòng cho LED (datasheet cấm).
