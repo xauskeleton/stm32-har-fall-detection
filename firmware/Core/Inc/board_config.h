@@ -6,7 +6,7 @@
 
 #include "stm32f4xx_hal.h"
 
-/* ---- Do pin: 2 cell 18650 noi tiep (2S) ----
+/* ---- Do pin (thang bao pin 4.0..7.6 V, xem BAT_FULL_V / BAT_EMPTY_V) ----
  * Pin -> XT60 -> diode SS54 (D2) -> VCC -> chia ap R1 9k / R4 1k -> LMV358 dem
  * -> R3 470 + C1 470n -> PA5 (ADC1 kenh 5).
  * => V_pin = V_PA5 * 10 + sut ap diode. */

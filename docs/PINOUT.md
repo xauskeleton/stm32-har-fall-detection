@@ -3,6 +3,11 @@
 Nguồn sự thật là `firmware/Core/Inc/board_config.h` và `firmware/test.ioc`. Đổi chân thì sửa
 `board_config.h` rồi cập nhật lại file này.
 
+`test.ioc` chỉ khai báo các chân CubeMX sinh code (I2C1, USART1, SWD, HSE, PC1–PC5, PC9–PC12).
+Các chân PA0, PA1, PA5, PA8, PB1, PB3, PB4, PB5 do code tự khởi tạo trong `battery.c`,
+`buzzer.c`, `rgb_led.c`, `bluetooth.c` — CubeMX không biết, nên đừng gán chúng cho ngoại vi khác
+trong CubeMX.
+
 ## Chân cần đi dây ra ngoài
 
 | Linh kiện | Chân linh kiện | Nối vào board | Chân MCU | Ghi chú |
@@ -19,7 +24,7 @@ Nguồn sự thật là `firmware/Core/Inc/board_config.h` và `firmware/test.io
 | | GND | GND | | |
 | Nút tròn ngoài hộp | 1 đầu | J3 chân 14 (C9) | PC9 | Input pull-up, nối song song KEY1. Nhấn = tắt còi |
 | | Đầu kia | GND | | |
-| Pin 2S (2 × 18650) | | Cổng XT60 | | Mạch đo có sẵn trên board |
+| Pin | | Cổng XT60 | | Mạch đo có sẵn trên board. Thang báo pin đang đặt 4,0–7,6 V (xem dưới) |
 
 Nối UART phải bắt chéo: TX của STM32 vào RXD của HC-05, RX của STM32 vào TXD của HC-05.
 
@@ -47,7 +52,8 @@ Không còn dùng: PC1–PC5 (5 LED trên board, giữ ở mức tắt), PC10, P
 
 ## LED RGB báo pin
 
-Tắt khi không dùng. Sáng 3 s lúc khởi động và khi nhấn KEY3.
+Lúc khởi động: tự kiểm tra đỏ → xanh lá → xanh dương (mỗi màu 0,4 s), rồi báo pin 3 s.
+Sau đó tắt, nhấn KEY3 thì báo pin lại 3 s.
 
 Thang đo: 4,0 V = 0%, 7,6 V = 100%.
 
