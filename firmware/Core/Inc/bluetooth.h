@@ -1,4 +1,4 @@
-/* HC-05 qua USART2, nguon bat/tat bang PB1 (xem so do trong board_config.h).
+/* HC-05 qua UART4, nguon bat/tat bang PB1 (xem so do trong board_config.h).
  *
  * Tiet kiem pin: binh thuong HC-05 TAT. Bat khi:
  *   - te nga: giu bat suot luc FALLEN, them BT_HOLD_MS sau khi dung day

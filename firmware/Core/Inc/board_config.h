@@ -49,7 +49,7 @@
 #define RGB_B_PIN           GPIO_PIN_3
 #define RGB_BLINK_MS        250u     /* nhip nhay do khi te nga */
 
-/* ---- Bluetooth HC-05 qua USART2, nguon bat/tat bang 1 GPIO de tiet kiem pin.
+/* ---- Bluetooth HC-05 qua UART4, nguon bat/tat bang 1 GPIO de tiet kiem pin.
  * HC-05 an 30-40 mA khi cho ghep noi -> binh thuong TAT, chi bat khi te nga
  * hoac khi nhan nut xem pin.
  *
@@ -67,16 +67,16 @@
  *   an 30-40 mA luc cho ghep noi -> ap sut, module co the reset lien tuc, dung
  *   lau co the hong chan PB1. Ban dung that thi dung mach transistor o tren.
  *
- *   HC-05 TXD -> A3 (PA3, USART2_RX)    HC-05 RXD <- A2 (PA2, USART2_TX)
+ *   HC-05 TXD -> A1 (PA1, UART4_RX)     HC-05 RXD <- A0 (PA0, UART4_TX)
  *   HC-05 GND -> GND                    STATE, EN: bo trong */
 #define BT_PWR_PORT         GPIOB
 #define BT_PWR_PIN          GPIO_PIN_1
-#define BT_UART             USART2
+#define BT_UART             UART4 
 #define BT_TX_PORT          GPIOA
-#define BT_TX_PIN           GPIO_PIN_2
+#define BT_TX_PIN           GPIO_PIN_0
 #define BT_RX_PORT          GPIOA
-#define BT_RX_PIN           GPIO_PIN_3
-#define BT_GPIO_AF          GPIO_AF7_USART2
+#define BT_RX_PIN           GPIO_PIN_1
+#define BT_GPIO_AF          GPIO_AF8_UART4
 #define BT_BAUD             9600u    /* mac dinh cua HC-05 o che do du lieu */
 #define BT_BOOT_MS          1000u    /* cho HC-05 khoi dong sau khi cap nguon */
 #define BT_SEND_MS          2000u    /* chu ky gui trang thai khi dang bat */

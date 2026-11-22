@@ -3,7 +3,7 @@
 #include "fall_detect.h"
 #include <stdio.h>
 
-/* USART2 cau hinh bang thanh ghi truc tiep, giong cach battery.c doc ADC.
+/* UART4 cau hinh bang thanh ghi truc tiep, giong cach battery.c doc ADC.
  * Hang doi vong 256 byte: du cho vai dong trang thai. */
 
 #define TXQ_SIZE  256u
@@ -22,7 +22,7 @@ static void pwr_write(bool on)
     HAL_GPIO_WritePin(BT_PWR_PORT, BT_PWR_PIN, on ? GPIO_PIN_SET : GPIO_PIN_RESET);
 }
 
-/* Khi HC-05 tat, PA2 dat ve analog: neu de TX o muc 1 (3.3 V) thi dong chay
+/* Khi HC-05 tat, chan TX (PA0) dat ve analog: neu de TX o muc 1 (3.3 V) thi dong chay
  * nguoc qua chan RXD lam HC-05 "song do", vua ton dien vua de treo module. */
 static void uart_pins(bool active)
 {
@@ -41,7 +41,7 @@ static void uart_pins(bool active)
 
 static void uart_start(void)
 {
-    __HAL_RCC_USART2_CLK_ENABLE();
+    __HAL_RCC_UART4_CLK_ENABLE();
     uart_pins(true);
     BT_UART->CR1 = 0;
     /* Oversampling 16: BRR = PCLK1 / baud (45 MHz / 9600 = 4687.5 -> 4688) */
@@ -55,7 +55,7 @@ static void uart_start(void)
 static void uart_stop(void)
 {
     BT_UART->CR1 = 0;
-    __HAL_RCC_USART2_CLK_DISABLE();
+    __HAL_RCC_UART4_CLK_DISABLE();
     uart_pins(false);
 }
 
