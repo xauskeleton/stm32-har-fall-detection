@@ -22,7 +22,7 @@ trong CubeMX.
 | | RXD | Header trái, A0 | PA0 | UART4_TX, 9600 baud |
 | | TXD | Header trái, A1 | PA1 | UART4_RX |
 | | GND | GND | | |
-| Nút tròn ngoài hộp | 1 đầu | J3 chân 14 (C9) | PC9 | Input pull-up, nối song song KEY1. Nhấn = LED RGB báo pin 3 s + bật Bluetooth 30 s |
+| Nút tròn ngoài hộp | 1 đầu | J3 chân 14 (C9) | PC9 | Input pull-up, nối song song KEY1. Nhấn = LED RGB báo pin 3 s |
 | | Đầu kia | GND | | |
 | Pin | | Cổng XT60 | | Mạch đo có sẵn trên board. Thang báo pin đang đặt 4,0–7,6 V (xem dưới) |
 
@@ -46,7 +46,7 @@ Không còn dùng: PC1–PC5 (5 LED trên board, giữ ở mức tắt), PC10, P
 | Ngoại vi | Cấu hình |
 |---|---|
 | TIM6 | Ngắt 20 ms = lấy mẫu 50 Hz (PSC 8999, ARR 199) |
-| UART4 | HC-05, chỉ bật clock khi HC-05 đang có nguồn |
+| UART4 | HC-05, luôn bật. Mỗi 2 s gửi `hành động \| trạng thái \| pin`, té ngã / đứng dậy thì gửi ngay |
 | ADC1 | Đọc bằng thanh ghi, trung bình 16 mẫu, chu kỳ 500 ms |
 
 ## LED RGB báo pin

@@ -54,9 +54,8 @@
 #define RGB_B_PIN           GPIO_PIN_5
 #define RGB_BLINK_MS        250u     /* nhip nhay do khi sap het pin */
 
-/* ---- Bluetooth HC-05 qua UART4, nguon bat/tat bang 1 GPIO de tiet kiem pin.
- * HC-05 an 30-40 mA khi cho ghep noi -> binh thuong TAT, chi bat khi te nga
- * hoac khi nhan nut xem pin.
+/* ---- Bluetooth HC-05 qua UART4. PB1 cap nguon, hien LUON BAT (PB1 = 1).
+ * Muon tiet kiem pin thi co the dung PB1 tat HC-05 khi khong can (mach duoi).
  *
  *   PB1 -- 1k --+-- B  NPN (S8050 / 2N3904)      +5V ---+---------+
  *               |      E -> GND                         |         |
@@ -84,7 +83,6 @@
 #define BT_GPIO_AF          GPIO_AF8_UART4
 #define BT_BAUD             9600u    /* mac dinh cua HC-05 o che do du lieu */
 #define BT_BOOT_MS          1000u    /* cho HC-05 khoi dong sau khi cap nguon */
-#define BT_SEND_MS          2000u    /* chu ky gui trang thai khi dang bat */
-#define BT_HOLD_MS          30000u   /* giu nguon them sau khi het te nga / nhan nut */
+#define BT_SEND_MS          2000u    /* chu ky gui hanh dong + trang thai */
 
 #endif /* BOARD_CONFIG_H */

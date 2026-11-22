@@ -125,7 +125,7 @@ int main(void)
   printf("Test LED RGB: do -> xanh la -> xanh duong\r\n");
   Battery_Init();          /* khoi tao LED RGB (co tu kiem tra 3 mau) + do pin */
   Battery_Show();          /* khoi dong: LED RGB bao muc pin 3 s */
-  Bluetooth_Init();        /* HC-05 tat cho toi khi te nga hoac nhan nut pin */
+  Bluetooth_Init();        /* HC-05 luon bat, gui trang thai moi 2 s */
 
   static button_t btn_bat  = BUTTON_INIT(BTN_BAT_PORT, BTN_BAT_PIN);
 
@@ -153,13 +153,11 @@ int main(void)
     /* USER CODE BEGIN 3 */
     /* --- ngoai vi: khong ham nao chan, de khong lo nhip lay mau 50 Hz --- */
     /* Nut xem pin: KEY1 / nut tron ngoai hop (PC9) */
-    if (Button_Pressed(&btn_bat)) {
-      Battery_Show();
-      Bluetooth_Wake(BT_HOLD_MS);                   /* bat HC-05 de dien thoai ket noi */
-    }
+    if (Button_Pressed(&btn_bat)) Battery_Show();
     Battery_Update();                               /* do pin + mau LED RGB */
     Buzzer_Update();
-    Bluetooth_Update(har_app_fall_state()->state,
+    /* Gui hanh dong + trang thai + pin len dien thoai qua HC-05 */
+    Bluetooth_Update(last_ev.label, har_app_fall_state()->state,
                      Battery_IsPresent() ? (int)Battery_GetPercent() : -1);
 
     /* --- in trang thai ra UART moi 2 giay --- */
