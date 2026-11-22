@@ -122,7 +122,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
   har_app_reset();
   Buzzer_Init();
-  Battery_Init();          /* khoi tao luon LED RGB bao pin */
+  printf("Test LED RGB: do -> xanh la -> xanh duong\r\n");
+  Battery_Init();          /* khoi tao LED RGB (co tu kiem tra 3 mau) + do pin */
   Battery_Show();          /* khoi dong: LED RGB bao muc pin 3 s */
   Bluetooth_Init();        /* HC-05 tat cho toi khi te nga hoac nhan nut pin */
 

@@ -29,6 +29,12 @@ void RGB_Init(void)
     init_pin(RGB_R_PORT, RGB_R_PIN);
     init_pin(RGB_G_PORT, RGB_G_PIN);
     init_pin(RGB_B_PORT, RGB_B_PIN);
+
+    /* Tu kiem tra luc khoi dong: do -> xanh la -> xanh duong, moi mau 0.4 s.
+     * Mau nao khong sang hoac sang sai mau = day / chan cua mau do co van de. */
+    RGB_Set(RGB_RED);   HAL_Delay(400);
+    RGB_Set(RGB_GREEN); HAL_Delay(400);
+    RGB_Set(RGB_BLUE);  HAL_Delay(400);
     RGB_Set(RGB_OFF);
 }
 
