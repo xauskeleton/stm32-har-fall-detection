@@ -49,13 +49,16 @@ static int is_shock(float a_min, float a_max)
 
 /* Nhay thang tu tu the chua nam sang LAYING ma khong qua nhan *_TO_LIE.
  * active_run = so cua so chua-nam lien tiep NGAY TRUOC cua so nay: doi it nhat
- * FALL_UPRIGHT_MIN, neu khong thi mot cua so doan sai don le cung du bao dong. */
-static int abrupt_to_laying(const fall_state_t *st, int label, int active_run)
+ * FALL_UPRIGHT_MIN, va phai co dau hieu tut/va dap nhe (tranh ngoi nga lung binh thuong). */
+static int abrupt_to_laying(const fall_state_t *st, int label, int active_run,
+                            float a_min, float a_max)
 {
+    int has_motion = (a_min <= FALL_ABRUPT_DROP_G) || (a_max >= FALL_ABRUPT_PEAK_G);
     return label == HAR_LAYING
            && is_active(st->prev_label)
            && active_run >= FALL_UPRIGHT_MIN
-           && st->guard == 0;
+           && st->guard == 0
+           && has_motion;
 }
 
 int fall_update(fall_state_t *st, int label, float a_min, float a_max)
@@ -72,7 +75,7 @@ int fall_update(fall_state_t *st, int label, float a_min, float a_max)
 
     switch (st->state) {
     case FALL_STATE_IDLE:
-        if (shock || abrupt_to_laying(st, label, active_run)) {
+        if (shock || abrupt_to_laying(st, label, active_run, a_min, a_max)) {
             st->state = FALL_STATE_SHOCK;
             st->timer = FALL_CONFIRM_WIN;
             st->laying = (label == HAR_LAYING) ? 1 : 0;

@@ -8,6 +8,11 @@
 #define ADC_TIMEOUT   20000u    /* vong cho EOC; 1 lan chuyen doi ~22 us */
 #define V_EMA_ALPHA   0.3f      /* lam muot dien ap giua cac lan do */
 
+volatile uint32_t g_bat_adc_raw = 0;
+volatile float    g_bat_pa5_v   = 0.0f;
+volatile float    g_bat_v       = 0.0f;
+volatile uint8_t  g_bat_pct     = 0;
+
 static float   bat_v = 0.0f;
 static uint8_t bat_pct = 0;
 static bool    showing = false;
@@ -65,7 +70,8 @@ static void measure(void)
 {
     uint32_t raw;
     if (!adc_read_avg(&raw)) return;
-    float v = (float)raw * 3.3f / 4095.0f * BAT_DIVIDER;
+    float v_pa5 = (float)raw * 3.3f / 4095.0f;
+    float v = v_pa5 * BAT_DIVIDER;
     if (v > 1.0f) v += BAT_DIODE_V;          /* co dien ap thi moi co sut ap diode */
 
     /* Lan dau, hoac vua cam / rut pin: lay luon gia tri moi, khong lam muot */
@@ -73,33 +79,56 @@ static void measure(void)
     else bat_v += V_EMA_ALPHA * (v - bat_v);
 
     bat_pct = (bat_v < BAT_NONE_V) ? 0u : voltage_to_percent(bat_v);
+
+    g_bat_adc_raw = raw;
+    g_bat_pa5_v   = v_pa5;
+    g_bat_v       = bat_v;
+    g_bat_pct     = bat_pct;
 }
 
-/* Mau LED RGB theo % pin (bang mau trong board_config.h). Binh thuong tat de
- * tiet kiem pin; sap het pin thi nhay do ke ca khi khong nhan nut. */
+/* Bang 10 muc mau PWM sang lien tuc theo % pin (moi nac 10% = 0.18 V).
+ * Kenh Do giam nhe khi pha mau vi LED do co Vf thap (~2.0 V) sang manh hon G/B. */
+static const struct {
+    uint8_t gt_pct;
+    uint8_t r, g, b;
+} BAT_LEVELS[] = {
+    { 90u, 140u, 255u, 220u },   /* Trang */
+    { 80u,   0u, 255u, 200u },   /* Xanh ngoc (Cyan) */
+    { 70u,   0u, 255u,  45u },   /* Xanh luc bao */
+    { 60u,   0u, 255u,   0u },   /* Xanh la */
+    { 50u,  60u, 255u,   0u },   /* Xanh non chuoi */
+    { 40u, 150u, 255u,   0u },   /* Vang */
+    { 30u, 220u, 120u,   0u },   /* Cam vang */
+    { 20u, 255u,  45u,   0u },   /* Cam dam */
+    { 10u, 200u,   0u, 160u },   /* Hong tim */
+    {  0u, 255u,   0u,   0u },   /* Do */
+};
+
+/* Mau LED RGB theo % pin. Binh thuong tat de tiet kiem pin;
+ * duoi BAT_EMPTY_V thi nhay do nhanh ke ca khi khong nhan nut. */
 static void refresh_leds(void)
 {
     uint32_t now = HAL_GetTick();
     bool fast_on = ((now / RGB_BLINK_MS) & 1u) == 0u;
-    bool slow_on = ((now / BAT_BLINK_SLOW_MS) & 1u) == 0u;
     bool present = bat_v >= BAT_NONE_V;
 
     if (present && bat_v < BAT_EMPTY_V) {
-        RGB_Set(fast_on ? RGB_RED : RGB_OFF);       /* sap het pin: bao ca khi khong nhan nut */
-    } else if (!showing) {
+        RGB_Set(fast_on ? RGB_RED : RGB_OFF);
+        return;
+    }
+    if (!showing) {
         RGB_Set(RGB_OFF);
-    } else if (!present) {
-        RGB_Set(RGB_BLUE);                          /* chi cap nguon USB */
-    } else if (bat_pct > BAT_PCT_FULL) {
-        RGB_Set(RGB_GREEN);
-    } else if (bat_pct > BAT_PCT_GOOD) {
-        RGB_Set(slow_on ? RGB_GREEN : RGB_OFF);
-    } else if (bat_pct > BAT_PCT_HALF) {
-        RGB_Set(RGB_YELLOW);
-    } else if (bat_pct > BAT_PCT_LOW) {
-        RGB_Set(slow_on ? RGB_YELLOW : RGB_OFF);
-    } else {
-        RGB_Set(RGB_RED);
+        return;
+    }
+    if (!present) {
+        RGB_Set(RGB_BLUE);
+        return;
+    }
+    for (uint32_t i = 0; i < sizeof(BAT_LEVELS) / sizeof(BAT_LEVELS[0]); i++) {
+        if (bat_pct > BAT_LEVELS[i].gt_pct || BAT_LEVELS[i].gt_pct == 0u) {
+            RGB_SetRGB(BAT_LEVELS[i].r, BAT_LEVELS[i].g, BAT_LEVELS[i].b);
+            return;
+        }
     }
 }
 

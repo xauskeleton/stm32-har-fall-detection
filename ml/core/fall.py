@@ -52,6 +52,8 @@ class FallParams:
     # sai thanh SITTING/WALKING ngay giua mot chuoi LAYING khong duoc tinh la "dang o
     # tu the chua nam". Xem docs/DECISIONS.md muc 1.
     upright_min: int = 4         # so cua so chua-nam LIEN TIEP toi thieu (~5.1 s)
+    abrupt_drop_g: float = 0.75  # tut gia toc toi thieu cho nhanh nhay thang sang LAYING
+    abrupt_peak_g: float = 1.50  # dinh gia toc toi thieu (chong bao gia khi ngoi nga lung)
 
 
 def window_shock_stats(win_acc):
@@ -105,16 +107,20 @@ class FallDetector:
         hit = a_max >= p.impact_g
         return (free and hit) if p.shock_rule == 'both' else (free or hit)
 
-    def _abrupt_to_laying(self, label, active_run):
+    def _abrupt_to_laying(self, label, active_run, a_min, a_max):
         """Nhay thang tu tu the chua nam sang LAYING ma khong qua nhan transition.
 
         active_run = so cua so chua-nam lien tiep ngay truoc cua so nay. Doi it nhat
-        upright_min cua so, neu khong thi mot cua so doan sai don le cung du bao dong.
+        upright_min cua so, va phai co dau hieu tut/va dap nhe (tranh ngoi nga lung).
         """
+        has_motion = True if (a_min is None or a_max is None) else (
+            a_min <= self.p.abrupt_drop_g or a_max >= self.p.abrupt_peak_g
+        )
         return (label == cfg.LABEL_LAYING
                 and self.prev_label in cfg.LABELS_ACTIVE
                 and active_run >= self.p.upright_min
-                and self._guard == 0)
+                and self._guard == 0
+                and has_motion)
 
     # -- API ---------------------------------------------------------------
     def update(self, label, a_min=None, a_max=None):
@@ -135,7 +141,7 @@ class FallDetector:
         shock = self._is_shock(a_min, a_max)
 
         if self.state == STATE_IDLE:
-            if shock or self._abrupt_to_laying(label, active_run):
+            if shock or self._abrupt_to_laying(label, active_run, a_min, a_max):
                 self.state = STATE_SHOCK
                 self._timer = p.confirm_windows
                 self._laying = 1 if label == cfg.LABEL_LAYING else 0

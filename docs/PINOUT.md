@@ -24,7 +24,7 @@ trong CubeMX.
 | | GND | GND | | |
 | Nút tròn ngoài hộp | 1 đầu | J3 chân 14 (C9) | PC9 | Input pull-up, nối song song KEY1. Nhấn = LED RGB báo pin 3 s |
 | | Đầu kia | GND | | |
-| Pin | | Cổng XT60 | | Mạch đo có sẵn trên board. Thang báo pin đang đặt 4,0–7,6 V (xem dưới) |
+| Pin | | Cổng XT60 | | Mạch đo có sẵn trên board. Thang báo pin đang đặt 6,2–8,0 V (xem dưới) |
 
 Nối UART phải bắt chéo: TX của STM32 vào RXD của HC-05, RX của STM32 vào TXD của HC-05.
 
@@ -54,17 +54,22 @@ Không còn dùng: PC1–PC5 (5 LED trên board, giữ ở mức tắt), PC10, P
 Lúc khởi động: tự kiểm tra đỏ → xanh lá → xanh dương (mỗi màu 0,4 s), rồi báo pin 3 s.
 Sau đó tắt, nhấn nút ngoài hộp hoặc KEY1 (PC9) thì báo pin lại 3 s.
 
-Thang đo: 4,0 V = 0%, 7,6 V = 100%.
+Thang đo: 6,2 V = 0%, 8,0 V = 100%.
 
 | Màu | Mức pin | Điện áp |
 |---|---|---|
-| Xanh lá | > 80% | > 6,88 V |
-| Xanh lá nhấp nháy chậm | 60–80% | 6,16–6,88 V |
-| Vàng | 40–60% | 5,44–6,16 V |
-| Vàng nhấp nháy chậm | 20–40% | 4,72–5,44 V |
-| Đỏ | ≤ 20% | 4,0–4,72 V |
-| Đỏ nhấp nháy nhanh | hết pin | < 4,0 V, luôn báo kể cả khi không nhấn nút |
-| Xanh dương | Không cắm pin, chạy nguồn USB | < 3,0 V |
+| Trắng | 91–100% | > 7,82 V |
+| Xanh ngọc (Cyan) | 81–90% | 7,64–7,82 V |
+| Xanh lục bảo | 71–80% | 7,46–7,64 V |
+| Xanh lá | 61–70% | 7,28–7,46 V |
+| Xanh nõn chuối | 51–60% | 7,10–7,28 V |
+| Vàng | 41–50% | 6,92–7,10 V |
+| Cam vàng | 31–40% | 6,74–6,92 V |
+| Cam đậm | 21–30% | 6,56–6,74 V |
+| Hồng tím | 11–20% | 6,38–6,56 V |
+| Đỏ | 0–10% | 6,20–6,38 V |
+| Đỏ nhấp nháy nhanh | hết pin | < 6,20 V, luôn báo kể cả khi không nhấn nút |
+| Xanh dương | Không cắm pin, chạy nguồn USB | < 5,5 V |
 
 ## Chân còn trống trên header
 

@@ -26,6 +26,10 @@
 #define FALL_EVENT_FALL       1
 #define FALL_EVENT_RECOVERED  2
 
+/* Nguong chuyen dong toi thieu cho nhanh nhay thang sang LAYING (chong bao gia khi ngoi nga lung) */
+#define FALL_ABRUPT_DROP_G    0.75f
+#define FALL_ABRUPT_PEAK_G    1.50f
+
 typedef struct {
     int state;
     int prev_label;
