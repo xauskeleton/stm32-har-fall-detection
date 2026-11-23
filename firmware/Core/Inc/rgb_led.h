@@ -2,6 +2,8 @@
 #ifndef RGB_LED_H
 #define RGB_LED_H
 
+#include <stdint.h>
+
 typedef enum {
     RGB_OFF = 0,
     RGB_RED,
@@ -15,5 +17,6 @@ typedef enum {
 
 void RGB_Init(void);
 void RGB_Set(rgb_color_t c);
+void RGB_SetRGB(uint8_t r, uint8_t g, uint8_t b);
 
 #endif /* RGB_LED_H */

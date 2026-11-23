@@ -1,23 +1,33 @@
 #include "bluetooth.h"
 #include "board_config.h"
 #include "fall_detect.h"
+#include "uart_dma.h"
 #include <stdio.h>
+#include <string.h>
 
-/* UART4 cau hinh bang thanh ghi truc tiep, giong cach battery.c doc ADC.
- * Hang doi vong 256 byte: du cho vai dong trang thai. */
+/* UART4 cau hinh bang thanh ghi truc tiep + DMA1 Stream 4 (Channel 4).
+ * Hang doi vong 512 byte: du cho nhieu dong debug lien tiep. */
 
-#define TXQ_SIZE  256u
+#define TXQ_SIZE  512u
 
-static char     txq[TXQ_SIZE];
-static uint16_t txq_head = 0, txq_tail = 0;
+static uint8_t txq[TXQ_SIZE];
+static uart_dma_tx_t bt_dma = {
+    .uart       = BT_UART,
+    .dma        = DMA1,
+    .stream     = DMA1_Stream4,
+    .channel    = 4u,
+    .stream_idx = 4u,
+    .irqn       = DMA1_Stream4_IRQn,
+    .buf        = txq,
+    .size       = TXQ_SIZE,
+};
 
 static uint32_t t_power_on = 0;
-static uint32_t t_last_send = 0;
-static int      prev_state = FALL_STATE_IDLE;
 
-/* Ten 12 hanh dong (tieng Anh) */
+/* Ten 12 hanh dong (tieng Anh). Len / xuong cau thang hien chung la "Walking" -
+ * chi doi ten hien thi, model va may trang thai van phan biet 12 nhan. */
 static const char *const ACTION_NAMES[12] = {
-    "Walking", "Walking upstairs", "Walking downstairs",
+    "Walking", "Walking", "Walking",
     "Sitting", "Standing", "Laying",
     "Stand -> sit", "Sit -> stand", "Sit -> lie",
     "Lie -> sit", "Stand -> lie", "Lie -> stand",
@@ -31,9 +41,9 @@ static const char *action_name(int label)
 
 static const char *state_name(int fall_state)
 {
-    if (fall_state == FALL_STATE_FALLEN) return "FALL";
-    if (fall_state == FALL_STATE_SHOCK)  return "Impact";
-    return "Normal";
+    if (fall_state == FALL_STATE_FALLEN) return "FALLEN";
+    if (fall_state == FALL_STATE_SHOCK)  return "SHOCK";
+    return "IDLE";
 }
 
 static void uart_start(void)
@@ -78,66 +88,41 @@ void Bluetooth_Init(void)
     HAL_GPIO_Init(BT_PWR_PORT, &gpio);
 
     uart_start();
+    UART_DMA_Init(&bt_dma);
     t_power_on = HAL_GetTick();
-    t_last_send = t_power_on;
 
     /* Tu kiem tra: in cau hinh UART4 ra USART1, roi gui thang 1 dong qua HC-05
-     * (cho HC-05 khoi dong truoc). Neu USART1 hien dung so ma dien thoai khong
-     * nhan duoc "HC-05 OK" -> loi o day / HC-05, khong phai o code. */
-    printf("UART4: CR1=0x%04lX BRR=%lu (PCLK1=%lu) | PA MODER=0x%08lX AFRL=0x%08lX | PB1=%d\r\n",
-           (unsigned long)BT_UART->CR1, (unsigned long)BT_UART->BRR,
-           (unsigned long)HAL_RCC_GetPCLK1Freq(),
-           (unsigned long)GPIOA->MODER, (unsigned long)GPIOA->AFR[0],
-           (int)HAL_GPIO_ReadPin(BT_PWR_PORT, BT_PWR_PIN));
+     * (cho HC-05 khoi dong truoc). */
+    printf("UART4 DMA: CR1=0x%04lX CR3=0x%04lX BRR=%lu (PCLK1=%lu) | PA MODER=0x%08lX AFRL=0x%08lX\r\n",
+           (unsigned long)BT_UART->CR1, (unsigned long)BT_UART->CR3,
+           (unsigned long)BT_UART->BRR, (unsigned long)HAL_RCC_GetPCLK1Freq(),
+           (unsigned long)GPIOA->MODER, (unsigned long)GPIOA->AFR[0]);
     HAL_Delay(BT_BOOT_MS);
-    const char *msg = "HC-05 OK\r\n";
-    for (const char *p = msg; *p; p++) {
-        while (!(BT_UART->SR & USART_SR_TXE)) { }
-        BT_UART->DR = (uint8_t)*p;
-    }
-    while (!(BT_UART->SR & USART_SR_TC)) { }
-    printf("UART4: sent \"HC-05 OK\" via A0\r\n");
+    UART_DMA_Write(&bt_dma, "HC-05 OK\r\n", 10u);
+    printf("UART4: sent \"HC-05 OK\" via A0 (DMA1 Stream4)\r\n");
+}
+
+void Bluetooth_DMA_IRQHandler(void)
+{
+    UART_DMA_IRQHandler(&bt_dma);
 }
 
 void Bluetooth_Send(const char *s)
 {
-    if (!booted()) return;
-    while (*s) {
-        uint16_t next = (uint16_t)((txq_head + 1u) % TXQ_SIZE);
-        if (next == txq_tail) return;               /* day hang doi -> bo phan con lai */
-        txq[txq_head] = *s++;
-        txq_head = next;
-    }
+    if (!booted() || !s) return;
+    size_t len = strlen(s);
+    if (len > 0u) UART_DMA_Write(&bt_dma, s, (uint16_t)len);
 }
 
-void Bluetooth_Update(int label, int fall_state, int battery_pct)
+void Bluetooth_LogWindow(int label, const fall_state_t *fs, float a_min, float a_max,
+                         int battery_pct)
 {
-    uint32_t now = HAL_GetTick();
-
-    /* Su kien te nga / dung day: bao ngay, khong cho chu ky */
-    if (fall_state == FALL_STATE_FALLEN && prev_state != FALL_STATE_FALLEN) {
-        Bluetooth_Send("!!! FALL DETECTED !!!\r\n");
-    } else if (fall_state != FALL_STATE_FALLEN && prev_state == FALL_STATE_FALLEN) {
-        Bluetooth_Send("Recovered\r\n");
-    }
-    prev_state = fall_state;
-
-    /* Dong trang thai dinh ky */
-    if (booted() && now - t_last_send >= BT_SEND_MS) {
-        t_last_send = now;
-        char line[64];
-        if (battery_pct >= 0)
-            snprintf(line, sizeof line, "%s | %s | bat %d%%\r\n",
-                     action_name(label), state_name(fall_state), battery_pct);
-        else
-            snprintf(line, sizeof line, "%s | %s | USB power\r\n",
-                     action_name(label), state_name(fall_state));
-        Bluetooth_Send(line);
-    }
-
-    /* Day toi da 1 byte moi lan goi - khong chan vong lap */
-    if (txq_tail != txq_head && (BT_UART->SR & USART_SR_TXE)) {
-        BT_UART->DR = (uint8_t)txq[txq_tail];
-        txq_tail = (uint16_t)((txq_tail + 1u) % TXQ_SIZE);
-    }
+    char smin[10], smax[10], sbat[16], line[96];
+    UART_FmtF2(smin, sizeof smin, a_min, 0);
+    UART_FmtF2(smax, sizeof smax, a_max, 0);
+    if (battery_pct >= 0) snprintf(sbat, sizeof sbat, "battery %d%%", battery_pct);
+    else                  snprintf(sbat, sizeof sbat, "battery USB");
+    snprintf(line, sizeof line, "%s | %s | amin=%s amax=%s | %s\r\n",
+             action_name(label), state_name(fs->state), smin, smax, sbat);
+    Bluetooth_Send(line);
 }

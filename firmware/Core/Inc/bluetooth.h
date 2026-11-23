@@ -1,27 +1,32 @@
-/* HC-05 qua UART4, LUON BAT (PB1 = 1 cap nguon). Gui len dien thoai:
+/* HC-05 qua UART4 (DMA1 Stream 4), LUON BAT. Kenh log DUY NHAT cua thiet bi:
+ * moi cua so phan loai (64 mau = 1.28 s) gui 1 dong
  *
- *   moi BT_SEND_MS:   "Di bo | Binh thuong | pin 76%"
- *   ngay khi te nga:  "!!! TE NGA !!!"
- *   ngay khi dung day: "Da dung day"
+ *   "Walking | SHOCK | amin=0.55 amax=2.13 | battery 84%"
  *
- * Gui khong chan: moi lan goi Bluetooth_Update() day toi da 1 byte, nen khong
- * lam lo nhip lay mau 50 Hz. Dien thoai doc bang app Serial Bluetooth Terminal.
+ *   hanh dong (len/xuong cau thang hien chung "Walking") | IDLE/SHOCK/FALLEN |
+ *   amin / amax = |a| nho nhat / lon nhat (g) cua cua so |
+ *   % pin, "battery USB" neu khong cam pin.
+ *
+ * Truyen khong chan bang DMA1 Stream 4 + hang doi vong 512 byte.
  */
 #ifndef BLUETOOTH_H
 #define BLUETOOTH_H
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "fall_detect.h"
 
 void Bluetooth_Init(void);
 
-/* Goi lien tuc trong vong lap chinh.
- *   label       = hanh dong 1..12 (0 = chua co ket qua)
- *   fall_state  = FALL_STATE_*
- *   battery_pct = 0..100, hoac -1 neu khong cam pin */
-void Bluetooth_Update(int label, int fall_state, int battery_pct);
+/* Goi 1 lan moi cua so phan loai (khi har_app_on_sample() tra ve 1).
+ * battery_pct = 0..100, hoac -1 neu khong cam pin (chay nguon USB). */
+void Bluetooth_LogWindow(int label, const fall_state_t *fs, float a_min, float a_max,
+                         int battery_pct);
 
-/* Dua 1 chuoi vao hang doi gui; bo qua neu HC-05 chua khoi dong xong */
+/* Dua 1 chuoi vao hang doi DMA; bo qua neu HC-05 chua khoi dong xong */
 void Bluetooth_Send(const char *s);
+
+/* Goi tu DMA1_Stream4_IRQHandler trong stm32f4xx_it.c */
+void Bluetooth_DMA_IRQHandler(void);
 
 #endif /* BLUETOOTH_H */

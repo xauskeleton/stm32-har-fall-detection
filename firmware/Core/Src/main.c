@@ -28,6 +28,7 @@
 #include "buzzer.h"
 #include "buttons.h"
 #include "bluetooth.h"
+#include "uart_dma.h"
 #include <math.h>
 #include <stdio.h>
 /* USER CODE END Includes */
@@ -59,16 +60,21 @@ volatile uint32_t missed_sample_count = 0;
 ICM20948_int16_vector3 accel_data;
 ICM20948_int16_vector3 gyro_data;
 
-/* Ket qua phan loai gan nhat, de in ra UART moi 2 giay */
-static har_app_event_t last_ev = { 0, 0, 0, 0.0f, 0.0f };
-static uint32_t n_fall_total = 0;
-static float last_acc_raw[3] = { 0.0f, 0.0f, 0.0f };   /* truoc hoan vi, de hieu chuan */
+#define U1_TXQ_SIZE 512u
+static uint8_t u1_txq[U1_TXQ_SIZE];
+static uart_dma_tx_t u1_dma = {
+    .uart       = USART1,
+    .dma        = DMA2,
+    .stream     = DMA2_Stream7,
+    .channel    = 4u,
+    .stream_idx = 7u,
+    .irqn       = DMA2_Stream7_IRQn,
+    .buf        = u1_txq,
+    .size       = U1_TXQ_SIZE,
+};
+static uint8_t u1_dma_ready = 0;
 
 #define DEG2RAD 0.0174532925f
-
-/* printf cua newlib-nano mac dinh KHONG ho tro %f -> in tay phan nguyen va 2 so le */
-#define CENT(v)  (int)(v), (int)(fabsf(((v) - (float)(int)(v)) * 100.0f))
-#define FRAC2(v) (int)(fabsf(((v) - (float)(int)(v)) * 100.0f))
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -83,8 +89,22 @@ static void MX_TIM6_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 int __io_putchar(int ch) {
-    HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+    uint8_t c = (uint8_t)ch;
+    if (u1_dma_ready) UART_DMA_Write(&u1_dma, &c, 1u);
+    else              HAL_UART_Transmit(&huart1, &c, 1, HAL_MAX_DELAY);
     return ch;
+}
+
+int _write(int file, char *ptr, int len) {
+    (void)file;
+    if (len <= 0) return 0;
+    if (u1_dma_ready) UART_DMA_Write(&u1_dma, ptr, (uint16_t)len);
+    else              HAL_UART_Transmit(&huart1, (uint8_t *)ptr, (uint16_t)len, HAL_MAX_DELAY);
+    return len;
+}
+
+void UART1_DMA_IRQHandler(void) {
+    UART_DMA_IRQHandler(&u1_dma);
 }
 /* USER CODE END 0 */
 
@@ -120,12 +140,14 @@ int main(void)
   MX_I2C1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  UART_DMA_Init(&u1_dma);
+  u1_dma_ready = 1;
   har_app_reset();
   Buzzer_Init();
   printf("RGB LED self-test: red -> green -> blue\r\n");
   Battery_Init();          /* khoi tao LED RGB (co tu kiem tra 3 mau) + do pin */
   Battery_Show();          /* khoi dong: LED RGB bao muc pin 3 s */
-  Bluetooth_Init();        /* HC-05 luon bat, gui trang thai moi 2 s */
+  Bluetooth_Init();        /* HC-05 luon bat, kenh log duy nhat: 1 dong moi cua so */
 
   static button_t btn_bat  = BUTTON_INIT(BTN_BAT_PORT, BTN_BAT_PIN);
 
@@ -156,39 +178,6 @@ int main(void)
     if (Button_Pressed(&btn_bat)) Battery_Show();
     Battery_Update();                               /* do pin + mau LED RGB */
     Buzzer_Update();
-    /* Gui hanh dong + trang thai + pin len dien thoai qua HC-05 */
-    Bluetooth_Update(last_ev.label, har_app_fall_state()->state,
-                     Battery_IsPresent() ? (int)Battery_GetPercent() : -1);
-
-    /* --- in trang thai ra UART moi 2 giay --- */
-    static uint32_t last_uart_time = 0;
-    if (HAL_GetTick() - last_uart_time >= 2000) {
-      last_uart_time = HAL_GetTick();
-      const fall_state_t *fs = har_app_fall_state();
-      const char *state_name = (fs->state == FALL_STATE_IDLE)  ? "IDLE"
-                             : (fs->state == FALL_STATE_SHOCK) ? "SHOCK" : "FALLEN";
-      float gv[3];
-      har_app_gravity(gv);
-
-      /* In ca acc THO (truoc hoan vi) va GRAVITY (sau hoan vi) de hieu chuan truc.
-       * Dung yen thi gravity PHAI ra (+1.0, ~0, ~0) - neu khong, xem sensor_app.h. */
-      printf("%-18s | %-6s | acc raw (%+d.%02d %+d.%02d %+d.%02d)"
-             " | gravity (%+d.%02d %+d.%02d %+d.%02d)"
-             " | |a| %d.%02d..%d.%02d g | falls: %lu\r\n",
-             har_label_name(last_ev.label), state_name,
-             CENT(last_acc_raw[0]), CENT(last_acc_raw[1]), CENT(last_acc_raw[2]),
-             CENT(gv[0]), CENT(gv[1]), CENT(gv[2]),
-             (int)last_ev.a_min, FRAC2(last_ev.a_min),
-             (int)last_ev.a_max, FRAC2(last_ev.a_max),
-             (unsigned long)n_fall_total);
-
-      float bv = Battery_GetVoltage();
-      if (Battery_IsPresent()) {
-        printf("Battery: %d.%02d V (%u%%)\r\n", CENT(bv), (unsigned)Battery_GetPercent());
-      } else {
-        printf("Battery: no battery (USB power)\r\n");
-      }
-    }
 
     /* --- moi mau o 50 Hz --- */
     if (flag_sample_imu) {
@@ -212,22 +201,14 @@ int main(void)
       gyro[1] = ((float)gyro_data.y / 32.768f) * DEG2RAD;
       gyro[2] = ((float)gyro_data.z / 32.768f) * DEG2RAD;
 
-      last_acc_raw[0] = acc[0];
-      last_acc_raw[1] = acc[1];
-      last_acc_raw[2] = acc[2];
-
       har_app_event_t ev;
       if (har_app_on_sample(acc, gyro, &ev)) {
-        last_ev = ev;
-        if (ev.fall) {
-          n_fall_total++;
-          Buzzer_Start();
-          printf("!!! FALL DETECTED !!!\r\n");
-        }
-        if (ev.recovered) {
-          Buzzer_Stop();
-          printf("Recovered from fall\r\n");
-        }      }
+        /* Log DUY NHAT: 1 dong qua Bluetooth moi cua so (1.28 s), kem % pin */
+        Bluetooth_LogWindow(ev.label, har_app_fall_state(), ev.a_min, ev.a_max,
+                            Battery_IsPresent() ? (int)Battery_GetPercent() : -1);
+        if (ev.fall)      { Buzzer_Start(); Battery_SetFallAlert(true);  }  /* coi + LED do */
+        if (ev.recovered) { Buzzer_Stop();  Battery_SetFallAlert(false); }
+      }
     }
   }
   /* USER CODE END 3 */

@@ -26,6 +26,21 @@
 #define FALL_EVENT_FALL       1
 #define FALL_EVENT_RECOVERED  2
 
+/* Nguong chuyen dong toi thieu cho nhanh nhay thang sang LAYING (chong bao gia khi ngoi nga lung) */
+#define FALL_ABRUPT_DROP_G    0.75f
+#define FALL_ABRUPT_PEAK_G    1.50f
+
+/* Vao SHOCK bang cu soc that: phai dung/di LIEN TIEP bao nhieu cua so moi coi la da
+ * dung day. Cua so ngay sau cua so soc chong 50% len cu nga, model hay doan la
+ * WALKING_DOWNSTAIRS -> 1 cua so dung/di khong du tin. */
+#define FALL_SHOCK_UPRIGHT_WIN 2
+
+/* Model gan cu nga la SIT_TO_LIE / STAND_TO_LIE. Cua so mang nhan do ma co roi tu do
+ * (<= FALL_FREEFALL_G) VA dap >= nguong nay thi coi la te nga, khong phai nam chu dong.
+ * Do tren HAPT goc: 118 lan nam xuong chu dong co |a|max (median 3, +-64 mau) lon nhat
+ * 1.87 g, 0 lan >= 1.9 g. 3 lan nga thu tren thiet bi: 2.13 / 2.25 / 2.26 g. */
+#define FALL_LIEDOWN_IMPACT_G  2.00f
+
 typedef struct {
     int state;
     int prev_label;
@@ -33,7 +48,9 @@ typedef struct {
     int timer;         /* dem nguoc trong SHOCK */
     int laying;        /* so cua so LAYING lien tiep */
     int recover;
-    int active_run;    /* so cua so chua-nam LIEN TIEP vua roi */
+    int active_run;    /* so cua so DUNG / DI LIEN TIEP vua roi (khong gom ngoi) */
+    int by_shock;      /* 1 = vao SHOCK bang cu soc that khi guard dang = 0 */
+    int shock_upright; /* trong SHOCK: so cua so dung/di lien tiep ke tu luc vao */
 } fall_state_t;
 
 void fall_reset(fall_state_t *st);

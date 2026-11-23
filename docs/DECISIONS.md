@@ -120,6 +120,91 @@ chạy độc lập với nhánh chuỗi nhãn, kiểm bằng chuỗi giả lậ
 Bài học chung: **F1 mức cửa sổ không phải chỉ số triển khai.** Model 160 thắng ở cả accuracy,
 macro-F1 và F1 4 nhãn ngã nhưng vẫn làm state machine đầu-cuối xấu đi. Phải đo đầu-cuối.
 
+### Nhánh nhảy thẳng sang `LAYING` khi chạy trên thiết bị thật
+
+Trên board thật, nhánh `_abrupt_to_laying()` gây báo nhầm mà HAPT không có: board nằm yên trên
+bàn, hoặc người ngồi ngả lưng, model đoán sai thành tư thế chưa nằm ≥ 4 cửa sổ rồi quay lại
+`LAYING` là đủ báo động, không cần va đập nào. Ba thay đổi:
+
+| thay đổi | lý do |
+|---|---|
+| thêm `abrupt_drop_g = 0,75` / `abrupt_peak_g = 1,5`: cửa sổ `LAYING` phải có \|a\|min ≤ 0,75 g **hoặc** \|a\|max ≥ 1,5 g | board nằm yên có \|a\| ≈ 1,0 g nên không còn kích hoạt được |
+| đếm `upright_min` theo `LABELS_UPRIGHT` (đi, cầu thang, đứng), **bỏ `SITTING`** | ngồi ngả lưng mà model sót `SIT_TO_LIE` là nguồn báo nhầm chính. Ngã từ tư thế ngồi vẫn bắt được qua nhánh sốc; chỉ mất trường hợp trượt khỏi ghế **không** có va đập |
+| bỏ điều kiện `guard == 0` trong nhánh này | thừa: nhãn `*_TO_LIE` không thuộc nhóm đứng/đi nên tự đưa bộ đếm về 0, cần thêm ≥ `upright_min` cửa sổ thì guard (`voluntary_guard` = 4 ≤ `upright_min`) đã hết. Guard vẫn dùng ở trạng thái SHOCK để huỷ khi đổ người xuống giường. `fall_detect.c` báo lỗi biên dịch nếu `upright_min < voluntary_guard` |
+
+Hai thay đổi đầu chỉ làm nhánh này khó kích hoạt hơn, thay đổi thứ ba không đổi hành vi, nên
+số báo nhầm trên HAPT gần như chắc chắn không tăng. **Chưa chạy lại** `ml/scripts/eval_fall.py`
+để có số liệu chính thức.
+
+### Cú ngã thật bị nhãn `STAND_TO_LIE` huỷ
+
+Thử ngã thật trên thiết bị (log Bluetooth): cửa sổ ngã có \|a\| 0,26..2,26 g → vào SHOCK đúng,
+nhưng cửa sổ ngay sau model gán **`STAND_TO_LIE`**, trạng thái SHOCK coi đó là nằm xuống chủ
+động nên huỷ, rồi guard chặn luôn hai cửa sổ `LAYING` sau đó → **không báo động**.
+
+Nguyên nhân: HAPT không có té ngã, động tác giống cú ngã nhất trong 12 lớp chính là đứng → nằm.
+Model gán cú ngã vào lớp đó là đương nhiên. Log cũng cho thấy model thỉnh thoảng đoán ra nhãn
+`*_TO_LIE` cả lúc đang đi/đứng (guard bật mà không có động tác nằm nào), nên nhãn này không đủ
+tin cậy để huỷ một cú sốc thật.
+
+Sửa bằng **thứ tự**: vào SHOCK bằng cú sốc thật khi guard **trước cửa sổ đó** = 0 → đặt cờ
+`by_shock`; khi `by_shock` thì nhãn `*_TO_LIE` và guard **không** huỷ SHOCK nữa, chờ `LAYING`
+đủ `laying_confirm` như thường.
+
+| tình huống | thứ tự | kết quả |
+|---|---|---|
+| ngã thật | sốc → `STAND_TO_LIE` → `LAYING` ×2 | **báo ngã** (trước đây bị huỷ) |
+| đổ người xuống giường | `STAND_TO_LIE` (guard bật) → sốc → `LAYING` | vẫn huỷ như cũ |
+| ngã mà chính cửa sổ sốc bị gán `STAND_TO_LIE` | guard trước = 0 | báo ngã |
+
+Lần thử thứ hai (đã có `by_shock`) vẫn không báo: cửa sổ ngay sau cửa sổ sốc — chồng 50% lên
+cú ngã — bị model gán nhãn đi/đứng (log 2 s bỏ sót cửa sổ này, chỉ suy ra được từ bộ đếm), và
+SHOCK coi đó là "đã đứng dậy". Nên khi `by_shock`, phải đi/đứng **`shock_upright_windows` = 2
+cửa sổ liên tiếp** mới huỷ; vào SHOCK bằng nhánh nhãn thì vẫn 1 cửa sổ như cũ.
+
+Log giờ chỉ còn **một** loại, chỉ qua Bluetooth: mỗi cửa sổ một dòng
+`Walking | SHOCK | amin=0.55 amax=2.13 | battery 84%` (`Bluetooth_LogWindow()`).
+Log 2 s cũ bỏ sót cửa sổ nên không dùng được để phân tích cú ngã. USART1 chỉ còn vài dòng lúc khởi động.
+
+Lần thử thứ ba (có log từng cửa sổ) **không vào SHOCK**: cú ngã có \|a\| 0,55..2,13 g — rơi
+tự do đủ, nhưng đập 2,13 < `impact_g` 2,2; cửa sổ sau model gán `STAND_TO_LIE` nên nhánh nhảy
+thẳng sang `LAYING` cũng không chạy. Ba lần ngã thử cho đỉnh 2,13 / 2,25 / 2,26 g — sát ngưỡng,
+lúc bắt lúc không (ngã lên đệm, và kênh sốc đang bị kẹp 2 g mỗi trục + median 3).
+
+Đo trên HAPT gốc (awk trên `RawData`, median 3 như firmware, lấy rộng ±64 mẫu quanh mỗi đoạn):
+
+| | 118 lần nằm xuống chủ động | 3 lần ngã thử |
+|---|---|---|
+| \|a\|max lớn nhất | **1,87 g** (≥ 1,8: 2 lần; ≥ 1,9: **0**) | 2,13 – 2,26 g |
+| \|a\|max trung bình | 1,37 g | |
+| rơi ≤ 0,6 g **và** đập ≥ 2,0 g | **0 / 118** | 3 / 3 |
+
+Thêm `liedown_impact_g = 2,0`: cửa sổ mang nhãn `*_TO_LIE` mà có rơi (≤ `freefall_g`) **và** đập
+≥ 2,0 g, guard trước đó = 0 → vào SHOCK với `by_shock`. Ngưỡng 2,2 g cho các nhãn khác giữ
+nguyên vì đi xuống cầu thang lên tới 2,43 g. Khoảng dự trữ trên HAPT chỉ 0,13 g (1,87 → 2,0), và
+người thật đổ người mạnh xuống giường có thể vượt — cần thử trên thiết bị.
+
+Đánh đổi: nằm xuống chủ động mà cú đổ người và nhãn `*_TO_LIE` rơi vào **cùng** cửa sổ, không
+có nhãn chuyển tư thế nào trước đó, sẽ báo ngã. **Chưa chạy lại** `ml/scripts/eval_fall.py`:
+thay đổi này có thể làm tăng báo nhầm trên HAPT nếu trong 118 lần nằm xuống có lần nào tạo sốc
+(rơi ≤ 0,6 g **và** đập ≥ 2,2 g) trước nhãn chuyển tư thế — phải đo trước khi ghi số liệu.
+
+### Tắt báo động chỉ khi thấy động tác dậy
+
+Trước đây trạng thái FALLEN tắt khi model báo **bất kỳ** nhãn nào khác `LAYING` 2 cửa sổ liên
+tiếp — kể cả `SITTING` (người ngã ngồi bệt dưới sàn, vẫn cần giúp) hay một nhãn đoán sai. Nay:
+
+| nhãn khi đang FALLEN | xử lý |
+|---|---|
+| `LIE_TO_SIT` / `LIE_TO_STAND` | bắt đầu đếm "đang dậy" |
+| `LAYING` | đếm lại từ 0 |
+| nhãn khác, **chưa** thấy động tác dậy | giữ nguyên báo động |
+| nhãn khác, **ngay sau** động tác dậy | đếm tiếp; đủ `recover_windows` (2) thì tắt |
+| đi / đứng liên tục ≥ `upright_min` (4) cửa sổ | tắt — dự phòng khi model sót nhãn động tác dậy, tránh còi kêu mãi |
+
+Một nhãn `LIE_TO_*` lẻ rồi lại `LAYING` không tắt báo động. Thay đổi này chỉ làm FALLEN kéo dài
+hơn, không tạo thêm sự kiện ngã.
+
 `ml/core/fall.py` và `firmware/Core/Src/fall_detect.c` là bản sao của nhau.
 
 ---

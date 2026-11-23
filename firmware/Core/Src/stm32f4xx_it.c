@@ -22,6 +22,7 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "bluetooth.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -219,5 +220,15 @@ void TIM6_DAC_IRQHandler(void)
       GPIOC->ODR ^= GPIO_PIN_5;
     }
   }
+}
+
+void DMA1_Stream4_IRQHandler(void)
+{
+  Bluetooth_DMA_IRQHandler();
+}
+
+void DMA2_Stream7_IRQHandler(void)
+{
+  UART1_DMA_IRQHandler();
 }
 /* USER CODE END 1 */

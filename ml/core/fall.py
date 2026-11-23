@@ -48,10 +48,18 @@ class FallParams:
     voluntary_guard: int = 4     # sau 1 nhan *_TO_LIE thi LAYING duoc coi la hop le (~5.1 s)
     recover_windows: int = 2     # roi khoi LAYING bao nhieu cua so thi go bao dong
 
-    # Muon te nga thi TRUOC DO phai dang dung/ngoi that su. Mot cua so don le doan
-    # sai thanh SITTING/WALKING ngay giua mot chuoi LAYING khong duoc tinh la "dang o
-    # tu the chua nam". Xem docs/DECISIONS.md muc 1.
-    upright_min: int = 4         # so cua so chua-nam LIEN TIEP toi thieu (~5.1 s)
+    # Muon te nga (qua nhanh nhay thang sang LAYING) thi TRUOC DO phai dang dung/di
+    # that su. Mot cua so don le doan sai thanh STANDING/WALKING ngay giua mot chuoi
+    # LAYING khong duoc tinh la "dang dung". Xem docs/DECISIONS.md muc 1.
+    upright_min: int = 4         # so cua so dung/di LIEN TIEP toi thieu (~5.1 s), phai >= voluntary_guard
+    abrupt_drop_g: float = 0.75  # tut gia toc toi thieu cho nhanh nhay thang sang LAYING
+    abrupt_peak_g: float = 1.50  # dinh gia toc toi thieu (chong bao gia khi ngoi nga lung)
+    # Vao SHOCK bang cu soc that: can dung/di lien tiep bao nhieu cua so moi huy. Cua so
+    # ngay sau cua so soc chong 50% len cu nga, model hay doan la WALKING_DOWNSTAIRS.
+    shock_upright_windows: int = 2
+    # Model gan cu nga la *_TO_LIE. Cua so mang nhan do ma co roi tu do VA dap >= nguong
+    # nay thi la te nga. HAPT goc: 118 lan nam chu dong |a|max lon nhat 1.87 g (median 3).
+    liedown_impact_g: float = 2.00
 
 
 def window_shock_stats(win_acc):
@@ -92,7 +100,9 @@ class FallDetector:
         self._timer = 0          # dem nguoc trong SHOCK
         self._laying = 0         # so cua so LAYING lien tiep
         self._recover = 0
-        self._active_run = 0     # so cua so chua-nam LIEN TIEP vua roi
+        self._active_run = 0     # so cua so DUNG / DI LIEN TIEP vua roi (khong gom ngoi)
+        self._by_shock = False   # vao SHOCK bang cu soc that khi guard dang = 0
+        self._shock_upright = 0  # trong SHOCK: so cua so dung/di lien tiep ke tu luc vao
 
     # -- noi bo ------------------------------------------------------------
     def _is_shock(self, a_min, a_max):
@@ -105,16 +115,25 @@ class FallDetector:
         hit = a_max >= p.impact_g
         return (free and hit) if p.shock_rule == 'both' else (free or hit)
 
-    def _abrupt_to_laying(self, label, active_run):
-        """Nhay thang tu tu the chua nam sang LAYING ma khong qua nhan transition.
+    def _abrupt_to_laying(self, label, active_run, a_min, a_max):
+        """Nhay thang tu DUNG / DI sang LAYING ma khong qua nhan transition.
 
-        active_run = so cua so chua-nam lien tiep ngay truoc cua so nay. Doi it nhat
-        upright_min cua so, neu khong thi mot cua so doan sai don le cung du bao dong.
+        active_run = so cua so dung/di lien tiep ngay truoc cua so nay. Doi it nhat
+        upright_min cua so, va phai co dau hieu tut/va dap nhe.
+
+        - Khong tinh SITTING: ngoi nga lung ma model sot nhan SIT_TO_LIE la nguon bao
+          nham chinh. Nga tu tu the ngoi van bat duoc qua nhanh soc.
+        - Khong kiem tra guard: nhan *_TO_LIE tu dua active_run ve 0, can them
+          >= upright_min (>= voluntary_guard) cua so dung/di nua thi guard da het.
+          Guard van dung o trang thai SHOCK.
         """
+        has_motion = True if (a_min is None or a_max is None) else (
+            a_min <= self.p.abrupt_drop_g or a_max >= self.p.abrupt_peak_g
+        )
         return (label == cfg.LABEL_LAYING
-                and self.prev_label in cfg.LABELS_ACTIVE
+                and self.prev_label in cfg.LABELS_UPRIGHT
                 and active_run >= self.p.upright_min
-                and self._guard == 0)
+                and has_motion)
 
     # -- API ---------------------------------------------------------------
     def update(self, label, a_min=None, a_max=None):
@@ -124,28 +143,43 @@ class FallDetector:
         """
         p = self.p
         event = None
-        active_run = self._active_run          # do dai chuoi chua-nam TRUOC cua so nay
-        self._active_run = active_run + 1 if label in cfg.LABELS_ACTIVE else 0
+        active_run = self._active_run          # do dai chuoi dung/di TRUOC cua so nay
+        self._active_run = active_run + 1 if label in cfg.LABELS_UPRIGHT else 0
 
+        guard_before = self._guard             # guard TRUOC cua so nay
         if self._guard > 0:
             self._guard -= 1
         if label in cfg.LABELS_LIE_DOWN_TRANSITION:
             self._guard = p.voluntary_guard        # nam xuong chu dong -> mien tru
 
         shock = self._is_shock(a_min, a_max)
+        # nhan "nam xuong" ma co roi + dap >= liedown_impact_g, truoc do khong co *_TO_LIE
+        liedown_shock = (label in cfg.LABELS_LIE_DOWN_TRANSITION and guard_before == 0
+                         and a_min is not None and a_max is not None
+                         and a_min <= p.freefall_g and a_max >= p.liedown_impact_g)
 
         if self.state == STATE_IDLE:
-            if shock or self._abrupt_to_laying(label, active_run):
+            if shock or liedown_shock or self._abrupt_to_laying(label, active_run, a_min, a_max):
                 self.state = STATE_SHOCK
                 self._timer = p.confirm_windows
                 self._laying = 1 if label == cfg.LABEL_LAYING else 0
+                # Soc that ma TRUOC DO khong co nhan *_TO_LIE = te nga. Model hay gan cu
+                # nga la STAND_TO_LIE; nhan do den SAU cu soc thi khong phai nam chu dong.
+                self._by_shock = (shock or liedown_shock) and guard_before == 0
+                self._shock_upright = 0
                 if self._laying >= p.laying_confirm:
                     self.state = STATE_FALLEN
                     event = 'FALL'
 
         elif self.state == STATE_SHOCK:
+            # vao bang soc that: can dung/di shock_upright_windows cua so lien tiep moi
+            # huy; vao bang nhanh nhan: 1 cua so nhu cu.
+            need_upright = p.shock_upright_windows if self._by_shock else 1
             self._timer -= 1
-            if label in cfg.LABELS_LIE_DOWN_TRANSITION or self._guard > 0:
+            self._shock_upright = (self._shock_upright + 1
+                                   if label in cfg.LABELS_UPRIGHT else 0)
+            if not self._by_shock and (label in cfg.LABELS_LIE_DOWN_TRANSITION
+                                       or self._guard > 0):
                 self.reset_soft()                   # nam xuong chu dong -> huy nghi ngo
             elif label == cfg.LABEL_LAYING:
                 self._laying += 1
@@ -153,19 +187,27 @@ class FallDetector:
                     self.state = STATE_FALLEN
                     self._recover = 0
                     event = 'FALL'
-            elif label in cfg.LABELS_UPRIGHT:
+            elif self._shock_upright >= need_upright:
                 self.reset_soft()                   # da dung day duoc -> khong phai te nang
             elif self._timer <= 0:
                 self.reset_soft()
 
         elif self.state == STATE_FALLEN:
-            if label == cfg.LABEL_LAYING:
-                self._recover = 0
-            else:
+            # Chi coi la da dung day khi thay DONG TAC DAY (LIE_TO_SIT / LIE_TO_STAND)
+            # roi khong quay lai LAYING. Ngoi / nhan khac khi chua thay dong tac day
+            # (vd ngoi bet duoi san sau khi nga) van giu bao dong.
+            if label in cfg.LABELS_GET_UP_TRANSITION:
                 self._recover += 1
-                if self._recover >= p.recover_windows:
-                    self.reset_soft()
-                    event = 'RECOVERED'
+            elif label == cfg.LABEL_LAYING:
+                self._recover = 0
+            elif self._recover > 0:
+                self._recover += 1                  # dang day do: dem tiep
+            # Du phong khi model sot nhan dong tac day: da dung/di lien tuc
+            # >= upright_min cua so (~5 s) thi cung tat, tranh coi keu mai.
+            if (self._recover >= p.recover_windows
+                    or self._active_run >= p.upright_min):
+                self.reset_soft()
+                event = 'RECOVERED'
 
         self.prev_label = label
         return event
@@ -176,6 +218,8 @@ class FallDetector:
         self._timer = 0
         self._laying = 0
         self._recover = 0
+        self._by_shock = False
+        self._shock_upright = 0
 
 
 def run_sequence(labels, acc=None, params=None, win_acc=None, use_median=True):
