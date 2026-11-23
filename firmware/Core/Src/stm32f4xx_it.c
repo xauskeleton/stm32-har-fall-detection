@@ -210,7 +210,14 @@ void TIM6_DAC_IRQHandler(void)
         missed_sample_count++;
     }
     flag_sample_imu = 1;
-    /* PC5 gio la LED5 bao pin nen bo den nhay heartbeat o day */
+
+    /* Kiem chung 50 Hz: dao LED5 (PC5) sau moi 50 mau = 1 lan/giay.
+     * Bam gio 60 s phai dem duoc dung 60 lan dao. */
+    static uint8_t tick = 0;
+    if (++tick >= 50u) {
+      tick = 0;
+      GPIOC->ODR ^= GPIO_PIN_5;
+    }
   }
 }
 /* USER CODE END 1 */

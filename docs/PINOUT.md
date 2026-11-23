@@ -38,8 +38,9 @@ Nối UART phải bắt chéo: TX của STM32 vào RXD của HC-05, RX của STM
 | PC9 | Nút KEY1 (X2) | Input pull-up, song song nút ngoài hộp. Nhấn = xem pin |
 | PA13 / PA14 | SWDIO / SWCLK | Nạp code qua ST-Link — không dùng cho việc khác |
 | PH0 / PH1 | Thạch anh HSE | 8 MHz, PLL lên 180 MHz |
+| PC5 | LED5 trên board | Đảo trạng thái sau mỗi 50 mẫu (1 lần/giây) để kiểm chứng ngắt TIM6 chạy đúng 50 Hz |
 
-Không còn dùng: PC1–PC5 (5 LED trên board, giữ ở mức tắt), PC10, PC11 (KEY3), PC12 (khai báo input, chưa dùng).
+Không còn dùng: PC1–PC4 (LED trên board, giữ ở mức tắt), PC10, PC11 (KEY3), PC12 (khai báo input, chưa dùng).
 
 ## Ngoại vi nội bộ
 
