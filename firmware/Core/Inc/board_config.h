@@ -7,14 +7,12 @@
 #include "stm32f4xx_hal.h"
 
 /* ---- Do pin (thang bao pin 4.0..7.6 V, xem BAT_FULL_V / BAT_EMPTY_V) ----
- * Pin -> XT60 -> diode SS54 (D2) -> VCC -> chia ap R1 9k / R4 1k -> LMV358 dem
- * -> R3 470 + C1 470n -> PA5 (ADC1 kenh 5).
- * => V_pin = V_PA5 * 10 + sut ap diode. */
+ * Pin -> chia ap R1 9k / R4 1k -> LMV358 dem -> R3 470 + C1 470n -> PA5 (ADC1 kenh 5).
+ * => V_pin = ADC * 3.3 / 4095 * (R1 + R4) / R4 = ADC * 3.3 / 4095 * 10 */
 #define BAT_ADC_PORT        GPIOA
 #define BAT_ADC_PIN         GPIO_PIN_5
 #define BAT_ADC_CHANNEL     5u
-#define BAT_DIVIDER         10.0f
-#define BAT_DIODE_V         0.40f    /* SS54 o dong nho; do bang dong ho roi chinh */
+#define BAT_DIVIDER         10.0f    /* (R1 + R4) / R4 = (9k + 1k) / 1k */
 #define BAT_FULL_V          7.60f    /* 100% */
 #define BAT_EMPTY_V         4.00f    /* 0%; duoi muc nay LED do nhay */
 #define BAT_NONE_V          3.00f    /* duoi muc nay = khong cam pin, chi cap USB

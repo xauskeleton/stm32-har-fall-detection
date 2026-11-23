@@ -11,7 +11,7 @@
 void    Battery_Init(void);
 void    Battery_Update(void);       /* goi lien tuc trong vong lap chinh */
 void    Battery_Show(void);         /* sang LED bao pin trong BAT_SHOW_MS */
-float   Battery_GetVoltage(void);   /* V, da cong sut ap diode */
+float   Battery_GetVoltage(void);   /* V = ADC * 3.3 / 4095 * 10 */
 uint8_t Battery_GetPercent(void);   /* 0..100 */
 bool    Battery_IsPresent(void);
 

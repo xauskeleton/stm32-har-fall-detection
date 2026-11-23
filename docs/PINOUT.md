@@ -34,7 +34,7 @@ Nối UART phải bắt chéo: TX của STM32 vào RXD của HC-05, RX của STM
 |---|---|---|
 | PB8 / PB9 | I2C1 SCL / SDA | ICM-20948, 400 kHz, địa chỉ 0x68, ±4 g / ±1000 dps |
 | PA9 / PA10 | USART1 TX / RX | Cổng USB UART, 115200 baud, in log |
-| PA5 | ADC1 kênh 5 | Đo điện áp pin qua mạch chia 10 lần + diode SS54 |
+| PA5 | ADC1 kênh 5 | Đo điện áp pin qua mạch chia 10 lần: V_pin = ADC × 3,3 / 4095 × 10 |
 | PC9 | Nút KEY1 (X2) | Input pull-up, song song nút ngoài hộp. Nhấn = xem pin |
 | PA13 / PA14 | SWDIO / SWCLK | Nạp code qua ST-Link — không dùng cho việc khác |
 | PH0 / PH1 | Thạch anh HSE | 8 MHz, PLL lên 180 MHz |

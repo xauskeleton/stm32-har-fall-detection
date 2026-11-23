@@ -65,8 +65,8 @@ static void measure(void)
 {
     uint32_t raw;
     if (!adc_read_avg(&raw)) return;
+    /* V_pin = ADC * 3.3 / 4095 * (R1 + R4) / R4, R1 = 9k, R4 = 1k */
     float v = (float)raw * 3.3f / 4095.0f * BAT_DIVIDER;
-    if (v > 1.0f) v += BAT_DIODE_V;          /* co dien ap thi moi co sut ap diode */
 
     /* Lan dau, hoac vua cam / rut pin: lay luon gia tri moi, khong lam muot */
     if (bat_v < BAT_NONE_V || v < BAT_NONE_V) bat_v = v;
