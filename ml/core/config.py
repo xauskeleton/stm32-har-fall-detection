@@ -75,6 +75,7 @@ LABEL_LAYING = 6
 LABELS_ACTIVE = frozenset({1, 2, 3, 4, 5})          # chua nam
 LABELS_UPRIGHT = frozenset({1, 2, 3, 5})            # dung / di bo
 LABELS_LIE_DOWN_TRANSITION = frozenset({9, 11})     # SIT_TO_LIE, STAND_TO_LIE
+LABELS_GET_UP_TRANSITION = frozenset({10, 12})      # LIE_TO_SIT, LIE_TO_STAND
 
 # === Chia train/test theo NGUOI, khong theo mau ===
 # Dung dung split chinh thuc cua HAPT. Chia ngau nhien theo cua so la SAI:

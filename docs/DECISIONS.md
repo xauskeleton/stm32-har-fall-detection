@@ -162,6 +162,22 @@ có nhãn chuyển tư thế nào trước đó, sẽ báo ngã. **Chưa chạy 
 thay đổi này có thể làm tăng báo nhầm trên HAPT nếu trong 118 lần nằm xuống có lần nào tạo sốc
 (rơi ≤ 0,6 g **và** đập ≥ 2,2 g) trước nhãn chuyển tư thế — phải đo trước khi ghi số liệu.
 
+### Tắt báo động chỉ khi thấy động tác dậy
+
+Trước đây trạng thái FALLEN tắt khi model báo **bất kỳ** nhãn nào khác `LAYING` 2 cửa sổ liên
+tiếp — kể cả `SITTING` (người ngã ngồi bệt dưới sàn, vẫn cần giúp) hay một nhãn đoán sai. Nay:
+
+| nhãn khi đang FALLEN | xử lý |
+|---|---|
+| `LIE_TO_SIT` / `LIE_TO_STAND` | bắt đầu đếm "đang dậy" |
+| `LAYING` | đếm lại từ 0 |
+| nhãn khác, **chưa** thấy động tác dậy | giữ nguyên báo động |
+| nhãn khác, **ngay sau** động tác dậy | đếm tiếp; đủ `recover_windows` (2) thì tắt |
+| đi / đứng liên tục ≥ `upright_min` (4) cửa sổ | tắt — dự phòng khi model sót nhãn động tác dậy, tránh còi kêu mãi |
+
+Một nhãn `LIE_TO_*` lẻ rồi lại `LAYING` không tắt báo động. Thay đổi này chỉ làm FALLEN kéo dài
+hơn, không tạo thêm sự kiện ngã.
+
 `ml/core/fall.py` và `firmware/Core/Src/fall_detect.c` là bản sao của nhau.
 
 ---

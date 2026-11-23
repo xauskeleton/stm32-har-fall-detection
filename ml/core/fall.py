@@ -176,13 +176,21 @@ class FallDetector:
                 self.reset_soft()
 
         elif self.state == STATE_FALLEN:
-            if label == cfg.LABEL_LAYING:
-                self._recover = 0
-            else:
+            # Chi coi la da dung day khi thay DONG TAC DAY (LIE_TO_SIT / LIE_TO_STAND)
+            # roi khong quay lai LAYING. Ngoi / nhan khac khi chua thay dong tac day
+            # (vd ngoi bet duoi san sau khi nga) van giu bao dong.
+            if label in cfg.LABELS_GET_UP_TRANSITION:
                 self._recover += 1
-                if self._recover >= p.recover_windows:
-                    self.reset_soft()
-                    event = 'RECOVERED'
+            elif label == cfg.LABEL_LAYING:
+                self._recover = 0
+            elif self._recover > 0:
+                self._recover += 1                  # dang day do: dem tiep
+            # Du phong khi model sot nhan dong tac day: da dung/di lien tuc
+            # >= upright_min cua so (~5 s) thi cung tat, tranh coi keu mai.
+            if (self._recover >= p.recover_windows
+                    or self._active_run >= p.upright_min):
+                self.reset_soft()
+                event = 'RECOVERED'
 
         self.prev_label = label
         return event

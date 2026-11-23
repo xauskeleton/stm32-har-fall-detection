@@ -21,6 +21,11 @@ static int is_lie_down_transition(int label)   /* nam xuong chu dong */
     return label == HAR_SIT_TO_LIE || label == HAR_STAND_TO_LIE;
 }
 
+static int is_get_up_transition(int label)     /* tu nam ngoi / dung day */
+{
+    return label == HAR_LIE_TO_SIT || label == HAR_LIE_TO_STAND;
+}
+
 void fall_reset(fall_state_t *st)
 {
     st->state = FALL_STATE_IDLE;
@@ -119,14 +124,21 @@ int fall_update(fall_state_t *st, int label, float a_min, float a_max)
         break;
 
     case FALL_STATE_FALLEN:
-        if (label == HAR_LAYING) {
-            st->recover = 0;
-        } else {
+        /* Chi coi la da dung day khi thay DONG TAC DAY (LIE_TO_SIT / LIE_TO_STAND)
+         * roi khong quay lai LAYING. Ngoi / nhan khac khi chua thay dong tac day
+         * (vd ngoi bet duoi san sau khi nga) van giu bao dong. */
+        if (is_get_up_transition(label)) {
             st->recover++;
-            if (st->recover >= FALL_RECOVER_WIN) {
-                reset_soft(st);
-                event = FALL_EVENT_RECOVERED;
-            }
+        } else if (label == HAR_LAYING) {
+            st->recover = 0;
+        } else if (st->recover > 0) {
+            st->recover++;                    /* dang day do: dem tiep */
+        }
+        /* Du phong khi model sot nhan dong tac day: da dung / di lien tuc
+         * >= FALL_UPRIGHT_MIN cua so (~5 s) thi cung tat, tranh coi keu mai. */
+        if (st->recover >= FALL_RECOVER_WIN || st->active_run >= FALL_UPRIGHT_MIN) {
+            reset_soft(st);
+            event = FALL_EVENT_RECOVERED;
         }
         break;
 
