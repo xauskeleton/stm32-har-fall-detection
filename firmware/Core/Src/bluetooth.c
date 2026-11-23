@@ -24,9 +24,10 @@ static uart_dma_tx_t bt_dma = {
 
 static uint32_t t_power_on = 0;
 
-/* Ten 12 hanh dong (tieng Anh) */
+/* Ten 12 hanh dong (tieng Anh). Len / xuong cau thang hien chung la "Walking" -
+ * chi doi ten hien thi, model va may trang thai van phan biet 12 nhan. */
 static const char *const ACTION_NAMES[12] = {
-    "Walking", "Walking upstairs", "Walking downstairs",
+    "Walking", "Walking", "Walking",
     "Sitting", "Standing", "Laying",
     "Stand -> sit", "Sit -> stand", "Sit -> lie",
     "Lie -> sit", "Stand -> lie", "Lie -> stand",
@@ -119,7 +120,7 @@ void Bluetooth_LogWindow(int label, const fall_state_t *fs, float a_min, float a
     UART_FmtF2(smin, sizeof smin, a_min, 0);
     UART_FmtF2(smax, sizeof smax, a_max, 0);
     snprintf(line, sizeof line,
-             "%s | %s | |a|%s..%s | r=%d g=%d l=%d t=%d s=%d u=%d\r\n",
+             "%s | %s | amin=%s amax=%s | r=%d g=%d l=%d t=%d s=%d u=%d\r\n",
              action_name(label), state_name(fs->state), smin, smax,
              fs->active_run, fs->guard, fs->laying, fs->timer,
              fs->by_shock, fs->shock_upright);

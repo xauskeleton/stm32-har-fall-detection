@@ -163,7 +163,7 @@ SHOCK coi đó là "đã đứng dậy". Nên khi `by_shock`, phải đi/đứng
 cửa sổ liên tiếp** mới huỷ; vào SHOCK bằng nhánh nhãn thì vẫn 1 cửa sổ như cũ.
 
 Log giờ chỉ còn **một** loại, chỉ qua Bluetooth: mỗi cửa sổ một dòng
-`Walking downstairs | SHOCK | |a|0.55..2.13 | r=0 g=4 l=0 t=4 s=1 u=0` (`Bluetooth_LogWindow()`).
+`Walking | SHOCK | amin=0.55 amax=2.13 | r=0 g=4 l=0 t=4 s=1 u=0` (`Bluetooth_LogWindow()`).
 Log 2 s cũ bỏ sót cửa sổ nên không dùng được để phân tích cú ngã. USART1 chỉ còn vài dòng lúc khởi động.
 
 Lần thử thứ ba (có log từng cửa sổ) **không vào SHOCK**: cú ngã có \|a\| 0,55..2,13 g — rơi

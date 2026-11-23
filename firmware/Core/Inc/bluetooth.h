@@ -1,9 +1,10 @@
 /* HC-05 qua UART4 (DMA1 Stream 4), LUON BAT. Kenh log DUY NHAT cua thiet bi:
  * moi cua so phan loai (64 mau = 1.28 s) gui 1 dong
  *
- *   "Walking downstairs | SHOCK | |a|0.55..2.13 | r=0 g=4 l=0 t=4 s=1 u=0"
+ *   "Walking | SHOCK | amin=0.55 amax=2.13 | r=0 g=4 l=0 t=4 s=1 u=0"
  *
- *   hanh dong | trang thai IDLE/SHOCK/FALLEN | |a| min..max (g) cua cua so |
+ *   hanh dong (len/xuong cau thang hien chung "Walking") | IDLE/SHOCK/FALLEN |
+ *   amin / amax = |a| nho nhat / lon nhat (g) cua cua so |
  *   r = so cua so dung/di lien tiep, g = guard nam chu dong, l = so lan LAYING trong SHOCK,
  *   t = so cua so con lai de xac nhan, s = vao SHOCK bang soc that, u = so cua so dung/di
  *   lien tiep tu luc vao SHOCK.
