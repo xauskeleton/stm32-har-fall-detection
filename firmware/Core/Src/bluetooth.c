@@ -117,15 +117,12 @@ void Bluetooth_Send(const char *s)
 void Bluetooth_LogWindow(int label, const fall_state_t *fs, float a_min, float a_max,
                          int battery_pct)
 {
-    char smin[10], smax[10], sbat[12], line[128];
+    char smin[10], smax[10], sbat[16], line[96];
     UART_FmtF2(smin, sizeof smin, a_min, 0);
     UART_FmtF2(smax, sizeof smax, a_max, 0);
-    if (battery_pct >= 0) snprintf(sbat, sizeof sbat, "bat %d%%", battery_pct);
-    else                  snprintf(sbat, sizeof sbat, "bat USB");
-    snprintf(line, sizeof line,
-             "%s | %s | amin=%s amax=%s | r=%d g=%d l=%d t=%d s=%d u=%d | %s\r\n",
-             action_name(label), state_name(fs->state), smin, smax,
-             fs->active_run, fs->guard, fs->laying, fs->timer,
-             fs->by_shock, fs->shock_upright, sbat);
+    if (battery_pct >= 0) snprintf(sbat, sizeof sbat, "battery %d%%", battery_pct);
+    else                  snprintf(sbat, sizeof sbat, "battery USB");
+    snprintf(line, sizeof line, "%s | %s | amin=%s amax=%s | %s\r\n",
+             action_name(label), state_name(fs->state), smin, smax, sbat);
     Bluetooth_Send(line);
 }
