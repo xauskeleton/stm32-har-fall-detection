@@ -89,9 +89,14 @@ int fall_update(fall_state_t *st, int label, float a_min, float a_max)
 
     int shock = is_shock(a_min, a_max);
 
+    /* Nhan "nam xuong" ma co roi + dap >= FALL_LIEDOWN_IMPACT_G, truoc do khong co nhan
+     * *_TO_LIE nao: nam chu dong khong bao gio dap manh vay -> la cu nga. */
+    int liedown_shock = is_lie_down_transition(label) && guard_before == 0
+                        && a_min <= FALL_FREEFALL_G && a_max >= FALL_LIEDOWN_IMPACT_G;
+
     switch (st->state) {
     case FALL_STATE_IDLE:
-        if (shock || abrupt_to_laying(st, label, active_run, a_min, a_max)) {
+        if (shock || liedown_shock || abrupt_to_laying(st, label, active_run, a_min, a_max)) {
             st->state = FALL_STATE_SHOCK;
             st->timer = FALL_CONFIRM_WIN;
             st->laying = (label == HAR_LAYING) ? 1 : 0;
@@ -99,7 +104,7 @@ int fall_update(fall_state_t *st, int label, float a_min, float a_max)
              * tung thay te nga nen hay gan cu nga la STAND_TO_LIE; nhan do den SAU cu
              * soc thi khong duoc coi la nam chu dong. Do nguoi xuong giuong thi nhan
              * *_TO_LIE den TRUOC cu soc -> guard_before > 0 -> van huy nhu cu. */
-            st->by_shock = shock && (guard_before == 0);
+            st->by_shock = (shock || liedown_shock) && (guard_before == 0);
             st->shock_upright = 0;
             if (st->laying >= FALL_LAYING_CONFIRM) {
                 st->state = FALL_STATE_FALLEN;

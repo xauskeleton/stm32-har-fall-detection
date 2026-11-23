@@ -164,6 +164,24 @@ cửa sổ liên tiếp** mới huỷ; vào SHOCK bằng nhánh nhãn thì vẫn
 `BT_WINDOW_LOG` (`board_config.h`) gửi qua Bluetooth một dòng `W ...` cho **mỗi** cửa sổ để lần
 thử sau thấy đủ chuỗi nhãn.
 
+Lần thử thứ ba (có log từng cửa sổ) **không vào SHOCK**: cú ngã có \|a\| 0,55..2,13 g — rơi
+tự do đủ, nhưng đập 2,13 < `impact_g` 2,2; cửa sổ sau model gán `STAND_TO_LIE` nên nhánh nhảy
+thẳng sang `LAYING` cũng không chạy. Ba lần ngã thử cho đỉnh 2,13 / 2,25 / 2,26 g — sát ngưỡng,
+lúc bắt lúc không (ngã lên đệm, và kênh sốc đang bị kẹp 2 g mỗi trục + median 3).
+
+Đo trên HAPT gốc (awk trên `RawData`, median 3 như firmware, lấy rộng ±64 mẫu quanh mỗi đoạn):
+
+| | 118 lần nằm xuống chủ động | 3 lần ngã thử |
+|---|---|---|
+| \|a\|max lớn nhất | **1,87 g** (≥ 1,8: 2 lần; ≥ 1,9: **0**) | 2,13 – 2,26 g |
+| \|a\|max trung bình | 1,37 g | |
+| rơi ≤ 0,6 g **và** đập ≥ 2,0 g | **0 / 118** | 3 / 3 |
+
+Thêm `liedown_impact_g = 2,0`: cửa sổ mang nhãn `*_TO_LIE` mà có rơi (≤ `freefall_g`) **và** đập
+≥ 2,0 g, guard trước đó = 0 → vào SHOCK với `by_shock`. Ngưỡng 2,2 g cho các nhãn khác giữ
+nguyên vì đi xuống cầu thang lên tới 2,43 g. Khoảng dự trữ trên HAPT chỉ 0,13 g (1,87 → 2,0), và
+người thật đổ người mạnh xuống giường có thể vượt — cần thử trên thiết bị.
+
 Đánh đổi: nằm xuống chủ động mà cú đổ người và nhãn `*_TO_LIE` rơi vào **cùng** cửa sổ, không
 có nhãn chuyển tư thế nào trước đó, sẽ báo ngã. **Chưa chạy lại** `ml/scripts/eval_fall.py`:
 thay đổi này có thể làm tăng báo nhầm trên HAPT nếu trong 118 lần nằm xuống có lần nào tạo sốc

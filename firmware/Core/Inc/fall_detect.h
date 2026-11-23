@@ -35,6 +35,12 @@
  * WALKING_DOWNSTAIRS -> 1 cua so dung/di khong du tin. */
 #define FALL_SHOCK_UPRIGHT_WIN 2
 
+/* Model gan cu nga la SIT_TO_LIE / STAND_TO_LIE. Cua so mang nhan do ma co roi tu do
+ * (<= FALL_FREEFALL_G) VA dap >= nguong nay thi coi la te nga, khong phai nam chu dong.
+ * Do tren HAPT goc: 118 lan nam xuong chu dong co |a|max (median 3, +-64 mau) lon nhat
+ * 1.87 g, 0 lan >= 1.9 g. 3 lan nga thu tren thiet bi: 2.13 / 2.25 / 2.26 g. */
+#define FALL_LIEDOWN_IMPACT_G  2.00f
+
 typedef struct {
     int state;
     int prev_label;

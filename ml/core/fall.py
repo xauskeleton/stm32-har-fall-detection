@@ -57,6 +57,9 @@ class FallParams:
     # Vao SHOCK bang cu soc that: can dung/di lien tiep bao nhieu cua so moi huy. Cua so
     # ngay sau cua so soc chong 50% len cu nga, model hay doan la WALKING_DOWNSTAIRS.
     shock_upright_windows: int = 2
+    # Model gan cu nga la *_TO_LIE. Cua so mang nhan do ma co roi tu do VA dap >= nguong
+    # nay thi la te nga. HAPT goc: 118 lan nam chu dong |a|max lon nhat 1.87 g (median 3).
+    liedown_impact_g: float = 2.00
 
 
 def window_shock_stats(win_acc):
@@ -150,15 +153,19 @@ class FallDetector:
             self._guard = p.voluntary_guard        # nam xuong chu dong -> mien tru
 
         shock = self._is_shock(a_min, a_max)
+        # nhan "nam xuong" ma co roi + dap >= liedown_impact_g, truoc do khong co *_TO_LIE
+        liedown_shock = (label in cfg.LABELS_LIE_DOWN_TRANSITION and guard_before == 0
+                         and a_min is not None and a_max is not None
+                         and a_min <= p.freefall_g and a_max >= p.liedown_impact_g)
 
         if self.state == STATE_IDLE:
-            if shock or self._abrupt_to_laying(label, active_run, a_min, a_max):
+            if shock or liedown_shock or self._abrupt_to_laying(label, active_run, a_min, a_max):
                 self.state = STATE_SHOCK
                 self._timer = p.confirm_windows
                 self._laying = 1 if label == cfg.LABEL_LAYING else 0
                 # Soc that ma TRUOC DO khong co nhan *_TO_LIE = te nga. Model hay gan cu
                 # nga la STAND_TO_LIE; nhan do den SAU cu soc thi khong phai nam chu dong.
-                self._by_shock = shock and guard_before == 0
+                self._by_shock = (shock or liedown_shock) and guard_before == 0
                 self._shock_upright = 0
                 if self._laying >= p.laying_confirm:
                     self.state = STATE_FALLEN
