@@ -30,6 +30,7 @@ void fall_reset(fall_state_t *st)
     st->laying = 0;
     st->recover = 0;
     st->active_run = 0;
+    st->by_shock = 0;
 }
 
 /* Ve IDLE nhung GIU prev_label va guard. */
@@ -39,6 +40,7 @@ static void reset_soft(fall_state_t *st)
     st->timer = 0;
     st->laying = 0;
     st->recover = 0;
+    st->by_shock = 0;
 }
 
 static int is_shock(float a_min, float a_max)
@@ -74,6 +76,7 @@ int fall_update(fall_state_t *st, int label, float a_min, float a_max)
     int active_run = st->active_run;          /* do dai chuoi dung/di TRUOC cua so nay */
     st->active_run = is_upright(label) ? active_run + 1 : 0;
 
+    int guard_before = st->guard;             /* guard TRUOC cua so nay */
     if (st->guard > 0) st->guard--;
     if (is_lie_down_transition(label)) st->guard = FALL_VOLUNTARY_GUARD;
 
@@ -85,6 +88,11 @@ int fall_update(fall_state_t *st, int label, float a_min, float a_max)
             st->state = FALL_STATE_SHOCK;
             st->timer = FALL_CONFIRM_WIN;
             st->laying = (label == HAR_LAYING) ? 1 : 0;
+            /* Soc that ma TRUOC DO khong co nhan *_TO_LIE nao = te nga. Model chua
+             * tung thay te nga nen hay gan cu nga la STAND_TO_LIE; nhan do den SAU cu
+             * soc thi khong duoc coi la nam chu dong. Do nguoi xuong giuong thi nhan
+             * *_TO_LIE den TRUOC cu soc -> guard_before > 0 -> van huy nhu cu. */
+            st->by_shock = shock && (guard_before == 0);
             if (st->laying >= FALL_LAYING_CONFIRM) {
                 st->state = FALL_STATE_FALLEN;
                 event = FALL_EVENT_FALL;
@@ -94,7 +102,7 @@ int fall_update(fall_state_t *st, int label, float a_min, float a_max)
 
     case FALL_STATE_SHOCK:
         st->timer--;
-        if (is_lie_down_transition(label) || st->guard > 0) {
+        if (!st->by_shock && (is_lie_down_transition(label) || st->guard > 0)) {
             reset_soft(st);                   /* nam chu dong -> huy nghi ngo */
         } else if (label == HAR_LAYING) {
             st->laying++;

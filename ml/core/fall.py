@@ -95,6 +95,7 @@ class FallDetector:
         self._laying = 0         # so cua so LAYING lien tiep
         self._recover = 0
         self._active_run = 0     # so cua so DUNG / DI LIEN TIEP vua roi (khong gom ngoi)
+        self._by_shock = False   # vao SHOCK bang cu soc that khi guard dang = 0
 
     # -- noi bo ------------------------------------------------------------
     def _is_shock(self, a_min, a_max):
@@ -138,6 +139,7 @@ class FallDetector:
         active_run = self._active_run          # do dai chuoi dung/di TRUOC cua so nay
         self._active_run = active_run + 1 if label in cfg.LABELS_UPRIGHT else 0
 
+        guard_before = self._guard             # guard TRUOC cua so nay
         if self._guard > 0:
             self._guard -= 1
         if label in cfg.LABELS_LIE_DOWN_TRANSITION:
@@ -150,13 +152,17 @@ class FallDetector:
                 self.state = STATE_SHOCK
                 self._timer = p.confirm_windows
                 self._laying = 1 if label == cfg.LABEL_LAYING else 0
+                # Soc that ma TRUOC DO khong co nhan *_TO_LIE = te nga. Model hay gan cu
+                # nga la STAND_TO_LIE; nhan do den SAU cu soc thi khong phai nam chu dong.
+                self._by_shock = shock and guard_before == 0
                 if self._laying >= p.laying_confirm:
                     self.state = STATE_FALLEN
                     event = 'FALL'
 
         elif self.state == STATE_SHOCK:
             self._timer -= 1
-            if label in cfg.LABELS_LIE_DOWN_TRANSITION or self._guard > 0:
+            if not self._by_shock and (label in cfg.LABELS_LIE_DOWN_TRANSITION
+                                       or self._guard > 0):
                 self.reset_soft()                   # nam xuong chu dong -> huy nghi ngo
             elif label == cfg.LABEL_LAYING:
                 self._laying += 1
@@ -187,6 +193,7 @@ class FallDetector:
         self._timer = 0
         self._laying = 0
         self._recover = 0
+        self._by_shock = False
 
 
 def run_sequence(labels, acc=None, params=None, win_acc=None, use_median=True):

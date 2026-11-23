@@ -38,6 +38,7 @@ typedef struct {
     int laying;        /* so cua so LAYING lien tiep */
     int recover;
     int active_run;    /* so cua so DUNG / DI LIEN TIEP vua roi (khong gom ngoi) */
+    int by_shock;      /* 1 = vao SHOCK bang cu soc that khi guard dang = 0 */
 } fall_state_t;
 
 void fall_reset(fall_state_t *st);

@@ -136,6 +136,32 @@ Hai thay đổi đầu chỉ làm nhánh này khó kích hoạt hơn, thay đổ
 số báo nhầm trên HAPT gần như chắc chắn không tăng. **Chưa chạy lại** `ml/scripts/eval_fall.py`
 để có số liệu chính thức.
 
+### Cú ngã thật bị nhãn `STAND_TO_LIE` huỷ
+
+Thử ngã thật trên thiết bị (log Bluetooth): cửa sổ ngã có \|a\| 0,26..2,26 g → vào SHOCK đúng,
+nhưng cửa sổ ngay sau model gán **`STAND_TO_LIE`**, trạng thái SHOCK coi đó là nằm xuống chủ
+động nên huỷ, rồi guard chặn luôn hai cửa sổ `LAYING` sau đó → **không báo động**.
+
+Nguyên nhân: HAPT không có té ngã, động tác giống cú ngã nhất trong 12 lớp chính là đứng → nằm.
+Model gán cú ngã vào lớp đó là đương nhiên. Log cũng cho thấy model thỉnh thoảng đoán ra nhãn
+`*_TO_LIE` cả lúc đang đi/đứng (guard bật mà không có động tác nằm nào), nên nhãn này không đủ
+tin cậy để huỷ một cú sốc thật.
+
+Sửa bằng **thứ tự**: vào SHOCK bằng cú sốc thật khi guard **trước cửa sổ đó** = 0 → đặt cờ
+`by_shock`; khi `by_shock` thì nhãn `*_TO_LIE` và guard **không** huỷ SHOCK nữa, chờ `LAYING`
+đủ `laying_confirm` như thường.
+
+| tình huống | thứ tự | kết quả |
+|---|---|---|
+| ngã thật | sốc → `STAND_TO_LIE` → `LAYING` ×2 | **báo ngã** (trước đây bị huỷ) |
+| đổ người xuống giường | `STAND_TO_LIE` (guard bật) → sốc → `LAYING` | vẫn huỷ như cũ |
+| ngã mà chính cửa sổ sốc bị gán `STAND_TO_LIE` | guard trước = 0 | báo ngã |
+
+Đánh đổi: nằm xuống chủ động mà cú đổ người và nhãn `*_TO_LIE` rơi vào **cùng** cửa sổ, không
+có nhãn chuyển tư thế nào trước đó, sẽ báo ngã. **Chưa chạy lại** `ml/scripts/eval_fall.py`:
+thay đổi này có thể làm tăng báo nhầm trên HAPT nếu trong 118 lần nằm xuống có lần nào tạo sốc
+(rơi ≤ 0,6 g **và** đập ≥ 2,2 g) trước nhãn chuyển tư thế — phải đo trước khi ghi số liệu.
+
 `ml/core/fall.py` và `firmware/Core/Src/fall_detect.c` là bản sao của nhau.
 
 ---
