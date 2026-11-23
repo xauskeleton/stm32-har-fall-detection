@@ -39,8 +39,9 @@
 #define BUZZER_PORT         GPIOA
 #define BUZZER_PIN          GPIO_PIN_8
 
-/* ---- LED RGB bao pin, cuc am chung (chan chung vao GND, ghi 1 la sang).
- * 5 LED PC1..PC5 tren board khong dung nua (MX_GPIO_Init van giu chung o muc 1 = tat).
+/* ---- LED RGB bao pin + bao nga (do lien tuc khi FALLEN), cuc am chung, PWM TIM2/TIM3.
+ * LED PC1..PC4 tren board khong dung nua (MX_GPIO_Init giu o muc 1 = tat);
+ * PC5 dao moi 50 mau de kiem chung TIM6 50 Hz.
  * Moi chan mau phai co tro noi tiep ~220-330R.
  * KHONG dung PC13..PC15: datasheet cam dung 3 chan nay cap dong cho LED. */
 #define RGB_R_PORT          GPIOB    /* J3 chan 7 */

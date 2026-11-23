@@ -50,8 +50,8 @@ sửa lại, chỉ thay phần thuật toán.
 - [x] `icm20948.c` + `.h` — driver I2C1 400 kHz, địa chỉ 0x68, có xử lý chuyển bank thanh ghi
 - [x] `main.c` — CubeMX sinh (clock 180 MHz, GPIO, I2C1, USART1, TIM6 50 Hz), chỉ sửa trong các
       khối `USER CODE`: đọc cảm biến → đổi đơn vị (±4 g → g, ±1000 dps → rad/s) →
-      `har_app_on_sample()` → in UART + LED theo trạng thái (PC1 xanh IDLE, PC2 vàng SHOCK,
-      PC3 đỏ FALLEN)
+      `har_app_on_sample()` → mỗi cửa sổ gửi 1 dòng log qua Bluetooth; té ngã thì còi kêu và
+      LED RGB đỏ liên tục
 - [x] `stm32f4xx_it.c` — ngắt TIM6 đặt cờ lấy mẫu, có đếm mẫu bị bỏ
 - [x] HAL + CMSIS core, startup, linker script, `.cproject` / `.project` / `.ioc`
 - [x] **Bỏ `Drivers/CMSIS_DSP`** — code mới tự viết FFT nên không dùng nữa. Tiết kiệm 559 file /

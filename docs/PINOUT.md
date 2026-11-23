@@ -19,7 +19,7 @@ trong CubeMX.
 | | Xanh dương | J3 chân 5 (B5) | PB5 | |
 | | Chân chung | GND | | |
 | Bluetooth HC-05 | VCC | Header trái, B1 | PB1 | Output mức 1 = bật HC-05. Cấp thẳng từ GPIO chỉ để thử |
-| | RXD | Header trái, A0 | PA0 | UART4_TX, 9600 baud |
+| | RXD | Header trái, A0 | PA0 | UART4_TX, 115200 baud (HC-05 phải chỉnh sẵn bằng `AT+UART=115200,0,0`) |
 | | TXD | Header trái, A1 | PA1 | UART4_RX |
 | | GND | GND | | |
 | Nút tròn ngoài hộp | 1 đầu | J3 chân 14 (C9) | PC9 | Input pull-up, nối song song KEY1. Nhấn = LED RGB báo pin 3 s |
