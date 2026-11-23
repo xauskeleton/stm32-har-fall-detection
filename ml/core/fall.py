@@ -54,6 +54,9 @@ class FallParams:
     upright_min: int = 4         # so cua so dung/di LIEN TIEP toi thieu (~5.1 s), phai >= voluntary_guard
     abrupt_drop_g: float = 0.75  # tut gia toc toi thieu cho nhanh nhay thang sang LAYING
     abrupt_peak_g: float = 1.50  # dinh gia toc toi thieu (chong bao gia khi ngoi nga lung)
+    # Vao SHOCK bang cu soc that: can dung/di lien tiep bao nhieu cua so moi huy. Cua so
+    # ngay sau cua so soc chong 50% len cu nga, model hay doan la WALKING_DOWNSTAIRS.
+    shock_upright_windows: int = 2
 
 
 def window_shock_stats(win_acc):
@@ -96,6 +99,7 @@ class FallDetector:
         self._recover = 0
         self._active_run = 0     # so cua so DUNG / DI LIEN TIEP vua roi (khong gom ngoi)
         self._by_shock = False   # vao SHOCK bang cu soc that khi guard dang = 0
+        self._shock_upright = 0  # trong SHOCK: so cua so dung/di lien tiep ke tu luc vao
 
     # -- noi bo ------------------------------------------------------------
     def _is_shock(self, a_min, a_max):
@@ -155,12 +159,18 @@ class FallDetector:
                 # Soc that ma TRUOC DO khong co nhan *_TO_LIE = te nga. Model hay gan cu
                 # nga la STAND_TO_LIE; nhan do den SAU cu soc thi khong phai nam chu dong.
                 self._by_shock = shock and guard_before == 0
+                self._shock_upright = 0
                 if self._laying >= p.laying_confirm:
                     self.state = STATE_FALLEN
                     event = 'FALL'
 
         elif self.state == STATE_SHOCK:
+            # vao bang soc that: can dung/di shock_upright_windows cua so lien tiep moi
+            # huy; vao bang nhanh nhan: 1 cua so nhu cu.
+            need_upright = p.shock_upright_windows if self._by_shock else 1
             self._timer -= 1
+            self._shock_upright = (self._shock_upright + 1
+                                   if label in cfg.LABELS_UPRIGHT else 0)
             if not self._by_shock and (label in cfg.LABELS_LIE_DOWN_TRANSITION
                                        or self._guard > 0):
                 self.reset_soft()                   # nam xuong chu dong -> huy nghi ngo
@@ -170,7 +180,7 @@ class FallDetector:
                     self.state = STATE_FALLEN
                     self._recover = 0
                     event = 'FALL'
-            elif label in cfg.LABELS_UPRIGHT:
+            elif self._shock_upright >= need_upright:
                 self.reset_soft()                   # da dung day duoc -> khong phai te nang
             elif self._timer <= 0:
                 self.reset_soft()
@@ -202,6 +212,7 @@ class FallDetector:
         self._laying = 0
         self._recover = 0
         self._by_shock = False
+        self._shock_upright = 0
 
 
 def run_sequence(labels, acc=None, params=None, win_acc=None, use_median=True):

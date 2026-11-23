@@ -157,6 +157,13 @@ Sửa bằng **thứ tự**: vào SHOCK bằng cú sốc thật khi guard **trư
 | đổ người xuống giường | `STAND_TO_LIE` (guard bật) → sốc → `LAYING` | vẫn huỷ như cũ |
 | ngã mà chính cửa sổ sốc bị gán `STAND_TO_LIE` | guard trước = 0 | báo ngã |
 
+Lần thử thứ hai (đã có `by_shock`) vẫn không báo: cửa sổ ngay sau cửa sổ sốc — chồng 50% lên
+cú ngã — bị model gán nhãn đi/đứng (log 2 s bỏ sót cửa sổ này, chỉ suy ra được từ bộ đếm), và
+SHOCK coi đó là "đã đứng dậy". Nên khi `by_shock`, phải đi/đứng **`shock_upright_windows` = 2
+cửa sổ liên tiếp** mới huỷ; vào SHOCK bằng nhánh nhãn thì vẫn 1 cửa sổ như cũ. Thêm
+`BT_WINDOW_LOG` (`board_config.h`) gửi qua Bluetooth một dòng `W ...` cho **mỗi** cửa sổ để lần
+thử sau thấy đủ chuỗi nhãn.
+
 Đánh đổi: nằm xuống chủ động mà cú đổ người và nhãn `*_TO_LIE` rơi vào **cùng** cửa sổ, không
 có nhãn chuyển tư thế nào trước đó, sẽ báo ngã. **Chưa chạy lại** `ml/scripts/eval_fall.py`:
 thay đổi này có thể làm tăng báo nhầm trên HAPT nếu trong 118 lần nằm xuống có lần nào tạo sốc

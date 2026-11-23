@@ -30,6 +30,11 @@
 #define FALL_ABRUPT_DROP_G    0.75f
 #define FALL_ABRUPT_PEAK_G    1.50f
 
+/* Vao SHOCK bang cu soc that: phai dung/di LIEN TIEP bao nhieu cua so moi coi la da
+ * dung day. Cua so ngay sau cua so soc chong 50% len cu nga, model hay doan la
+ * WALKING_DOWNSTAIRS -> 1 cua so dung/di khong du tin. */
+#define FALL_SHOCK_UPRIGHT_WIN 2
+
 typedef struct {
     int state;
     int prev_label;
@@ -39,6 +44,7 @@ typedef struct {
     int recover;
     int active_run;    /* so cua so DUNG / DI LIEN TIEP vua roi (khong gom ngoi) */
     int by_shock;      /* 1 = vao SHOCK bang cu soc that khi guard dang = 0 */
+    int shock_upright; /* trong SHOCK: so cua so dung/di lien tiep ke tu luc vao */
 } fall_state_t;
 
 void fall_reset(fall_state_t *st);

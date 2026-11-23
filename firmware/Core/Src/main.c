@@ -281,6 +281,24 @@ int main(void)
       har_app_event_t ev;
       if (har_app_on_sample(acc, gyro, &ev)) {
         last_ev = ev;
+#if BT_WINDOW_LOG
+        {
+          /* 1 dong moi cua so: nhan + trang thai + |a| + bo dem may trang thai.
+           * s = by_shock, u = shock_upright. Dong trang thai 2 s bo sot cua so. */
+          const fall_state_t *ws = har_app_fall_state();
+          const char *wst = (ws->state == FALL_STATE_IDLE)  ? "IDLE"
+                          : (ws->state == FALL_STATE_SHOCK) ? "SHOCK" : "FALLEN";
+          char wmin[10], wmax[10], wline[112];
+          UART_FmtF2(wmin, sizeof wmin, ev.a_min, 0);
+          UART_FmtF2(wmax, sizeof wmax, ev.a_max, 0);
+          snprintf(wline, sizeof wline,
+                   "W %s | %s | |a|%s..%s | r=%d g=%d l=%d t=%d s=%d u=%d\r\n",
+                   har_label_name(ev.label), wst, wmin, wmax,
+                   ws->active_run, ws->guard, ws->laying, ws->timer,
+                   ws->by_shock, ws->shock_upright);
+          Bluetooth_Send(wline);
+        }
+#endif
         if (ev.fall) {
           n_fall_total++;
           Buzzer_Start();

@@ -36,6 +36,7 @@ void fall_reset(fall_state_t *st)
     st->recover = 0;
     st->active_run = 0;
     st->by_shock = 0;
+    st->shock_upright = 0;
 }
 
 /* Ve IDLE nhung GIU prev_label va guard. */
@@ -46,6 +47,7 @@ static void reset_soft(fall_state_t *st)
     st->laying = 0;
     st->recover = 0;
     st->by_shock = 0;
+    st->shock_upright = 0;
 }
 
 static int is_shock(float a_min, float a_max)
@@ -98,6 +100,7 @@ int fall_update(fall_state_t *st, int label, float a_min, float a_max)
              * soc thi khong duoc coi la nam chu dong. Do nguoi xuong giuong thi nhan
              * *_TO_LIE den TRUOC cu soc -> guard_before > 0 -> van huy nhu cu. */
             st->by_shock = shock && (guard_before == 0);
+            st->shock_upright = 0;
             if (st->laying >= FALL_LAYING_CONFIRM) {
                 st->state = FALL_STATE_FALLEN;
                 event = FALL_EVENT_FALL;
@@ -105,8 +108,12 @@ int fall_update(fall_state_t *st, int label, float a_min, float a_max)
         }
         break;
 
-    case FALL_STATE_SHOCK:
+    case FALL_STATE_SHOCK: {
+        /* Vao bang soc that: can dung/di FALL_SHOCK_UPRIGHT_WIN cua so lien tiep moi
+         * huy; vao bang nhanh nhan: 1 cua so nhu cu. */
+        int need_upright = st->by_shock ? FALL_SHOCK_UPRIGHT_WIN : 1;
         st->timer--;
+        st->shock_upright = is_upright(label) ? st->shock_upright + 1 : 0;
         if (!st->by_shock && (is_lie_down_transition(label) || st->guard > 0)) {
             reset_soft(st);                   /* nam chu dong -> huy nghi ngo */
         } else if (label == HAR_LAYING) {
@@ -116,12 +123,13 @@ int fall_update(fall_state_t *st, int label, float a_min, float a_max)
                 st->recover = 0;
                 event = FALL_EVENT_FALL;
             }
-        } else if (is_upright(label)) {
+        } else if (st->shock_upright >= need_upright) {
             reset_soft(st);                   /* da dung day -> khong phai te nang */
         } else if (st->timer <= 0) {
             reset_soft(st);
         }
         break;
+    }
 
     case FALL_STATE_FALLEN:
         /* Chi coi la da dung day khi thay DONG TAC DAY (LIE_TO_SIT / LIE_TO_STAND)
