@@ -17,6 +17,9 @@ extern volatile uint8_t  g_bat_pct;       /* phan tram pin 0..100 */
 void    Battery_Init(void);
 void    Battery_Update(void);       /* goi lien tuc trong vong lap chinh */
 void    Battery_Show(void);         /* sang LED bao pin trong BAT_SHOW_MS */
+/* LED RGB dung chung: true = dang te nga -> LED do lien tuc, uu tien hon moi bao pin.
+ * false = tro lai bao pin nhu thuong. */
+void    Battery_SetFallAlert(bool on);
 float   Battery_GetVoltage(void);   /* V, da cong sut ap diode */
 uint8_t Battery_GetPercent(void);   /* 0..100 */
 bool    Battery_IsPresent(void);

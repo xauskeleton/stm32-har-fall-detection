@@ -106,12 +106,18 @@ static const struct {
 
 /* Mau LED RGB theo % pin. Binh thuong tat de tiet kiem pin;
  * duoi BAT_EMPTY_V thi nhay do nhanh ke ca khi khong nhan nut. */
+static bool fall_alert = false;   /* dang FALLEN: LED do, uu tien hon moi bao pin */
+
 static void refresh_leds(void)
 {
     uint32_t now = HAL_GetTick();
     bool fast_on = ((now / RGB_BLINK_MS) & 1u) == 0u;
     bool present = bat_v >= BAT_NONE_V;
 
+    if (fall_alert) {
+        RGB_Set(RGB_RED);
+        return;
+    }
     if (present && bat_v < BAT_EMPTY_V) {
         RGB_Set(fast_on ? RGB_RED : RGB_OFF);
         return;
@@ -159,6 +165,12 @@ void Battery_Show(void)
     measure();                 /* do ngay de hien so moi nhat */
     showing = true;
     show_start = HAL_GetTick();
+    refresh_leds();
+}
+
+void Battery_SetFallAlert(bool on)
+{
+    fall_alert = on;
     refresh_leds();
 }
 

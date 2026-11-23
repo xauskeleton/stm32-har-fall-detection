@@ -203,10 +203,11 @@ int main(void)
 
       har_app_event_t ev;
       if (har_app_on_sample(acc, gyro, &ev)) {
-        /* Log DUY NHAT: 1 dong qua Bluetooth moi cua so (1.28 s) */
-        Bluetooth_LogWindow(ev.label, har_app_fall_state(), ev.a_min, ev.a_max);
-        if (ev.fall)      Buzzer_Start();
-        if (ev.recovered) Buzzer_Stop();
+        /* Log DUY NHAT: 1 dong qua Bluetooth moi cua so (1.28 s), kem % pin */
+        Bluetooth_LogWindow(ev.label, har_app_fall_state(), ev.a_min, ev.a_max,
+                            Battery_IsPresent() ? (int)Battery_GetPercent() : -1);
+        if (ev.fall)      { Buzzer_Start(); Battery_SetFallAlert(true);  }  /* coi + LED do */
+        if (ev.recovered) { Buzzer_Stop();  Battery_SetFallAlert(false); }
       }
     }
   }

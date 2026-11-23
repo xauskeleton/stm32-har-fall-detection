@@ -49,10 +49,13 @@ Không còn dùng: PC1–PC5 (5 LED trên board, giữ ở mức tắt), PC10, P
 | UART4 | HC-05, luôn bật. Mỗi 2 s gửi `hành động \| trạng thái \| pin`, té ngã / đứng dậy thì gửi ngay |
 | ADC1 | Đọc bằng thanh ghi, trung bình 16 mẫu, chu kỳ 500 ms |
 
-## LED RGB báo pin
+## LED RGB báo pin và báo ngã
 
 Lúc khởi động: tự kiểm tra đỏ → xanh lá → xanh dương (mỗi màu 0,4 s), rồi báo pin 3 s.
 Sau đó tắt, nhấn nút ngoài hộp hoặc KEY1 (PC9) thì báo pin lại 3 s.
+
+**Đang té ngã (FALLEN): LED đỏ sáng liên tục**, ưu tiên hơn mọi kiểu báo pin, cùng lúc với còi.
+Người dùng đứng dậy (hết FALLEN) thì LED trở lại báo pin như bảng dưới.
 
 Thang đo: 6,2 V = 0%, 8,0 V = 100%.
 
