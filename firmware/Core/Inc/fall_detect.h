@@ -37,7 +37,7 @@ typedef struct {
     int timer;         /* dem nguoc trong SHOCK */
     int laying;        /* so cua so LAYING lien tiep */
     int recover;
-    int active_run;    /* so cua so chua-nam LIEN TIEP vua roi */
+    int active_run;    /* so cua so DUNG / DI LIEN TIEP vua roi (khong gom ngoi) */
 } fall_state_t;
 
 void fall_reset(fall_state_t *st);

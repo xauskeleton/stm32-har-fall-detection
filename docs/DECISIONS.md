@@ -120,6 +120,22 @@ chạy độc lập với nhánh chuỗi nhãn, kiểm bằng chuỗi giả lậ
 Bài học chung: **F1 mức cửa sổ không phải chỉ số triển khai.** Model 160 thắng ở cả accuracy,
 macro-F1 và F1 4 nhãn ngã nhưng vẫn làm state machine đầu-cuối xấu đi. Phải đo đầu-cuối.
 
+### Nhánh nhảy thẳng sang `LAYING` khi chạy trên thiết bị thật
+
+Trên board thật, nhánh `_abrupt_to_laying()` gây báo nhầm mà HAPT không có: board nằm yên trên
+bàn, hoặc người ngồi ngả lưng, model đoán sai thành tư thế chưa nằm ≥ 4 cửa sổ rồi quay lại
+`LAYING` là đủ báo động, không cần va đập nào. Ba thay đổi:
+
+| thay đổi | lý do |
+|---|---|
+| thêm `abrupt_drop_g = 0,75` / `abrupt_peak_g = 1,5`: cửa sổ `LAYING` phải có \|a\|min ≤ 0,75 g **hoặc** \|a\|max ≥ 1,5 g | board nằm yên có \|a\| ≈ 1,0 g nên không còn kích hoạt được |
+| đếm `upright_min` theo `LABELS_UPRIGHT` (đi, cầu thang, đứng), **bỏ `SITTING`** | ngồi ngả lưng mà model sót `SIT_TO_LIE` là nguồn báo nhầm chính. Ngã từ tư thế ngồi vẫn bắt được qua nhánh sốc; chỉ mất trường hợp trượt khỏi ghế **không** có va đập |
+| bỏ điều kiện `guard == 0` trong nhánh này | thừa: nhãn `*_TO_LIE` không thuộc nhóm đứng/đi nên tự đưa bộ đếm về 0, cần thêm ≥ `upright_min` cửa sổ thì guard (`voluntary_guard` = 4 ≤ `upright_min`) đã hết. Guard vẫn dùng ở trạng thái SHOCK để huỷ khi đổ người xuống giường. `fall_detect.c` báo lỗi biên dịch nếu `upright_min < voluntary_guard` |
+
+Hai thay đổi đầu chỉ làm nhánh này khó kích hoạt hơn, thay đổi thứ ba không đổi hành vi, nên
+số báo nhầm trên HAPT gần như chắc chắn không tăng. **Chưa chạy lại** `ml/scripts/eval_fall.py`
+để có số liệu chính thức.
+
 `ml/core/fall.py` và `firmware/Core/Src/fall_detect.c` là bản sao của nhau.
 
 ---
