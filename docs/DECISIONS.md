@@ -160,9 +160,11 @@ Sửa bằng **thứ tự**: vào SHOCK bằng cú sốc thật khi guard **trư
 Lần thử thứ hai (đã có `by_shock`) vẫn không báo: cửa sổ ngay sau cửa sổ sốc — chồng 50% lên
 cú ngã — bị model gán nhãn đi/đứng (log 2 s bỏ sót cửa sổ này, chỉ suy ra được từ bộ đếm), và
 SHOCK coi đó là "đã đứng dậy". Nên khi `by_shock`, phải đi/đứng **`shock_upright_windows` = 2
-cửa sổ liên tiếp** mới huỷ; vào SHOCK bằng nhánh nhãn thì vẫn 1 cửa sổ như cũ. Thêm
-`BT_WINDOW_LOG` (`board_config.h`) gửi qua Bluetooth một dòng `W ...` cho **mỗi** cửa sổ để lần
-thử sau thấy đủ chuỗi nhãn.
+cửa sổ liên tiếp** mới huỷ; vào SHOCK bằng nhánh nhãn thì vẫn 1 cửa sổ như cũ.
+
+Log giờ chỉ còn **một** loại, chỉ qua Bluetooth: mỗi cửa sổ một dòng
+`Walking downstairs | SHOCK | |a|0.55..2.13 | r=0 g=4 l=0 t=4 s=1 u=0` (`Bluetooth_LogWindow()`).
+Log 2 s cũ bỏ sót cửa sổ nên không dùng được để phân tích cú ngã. USART1 chỉ còn vài dòng lúc khởi động.
 
 Lần thử thứ ba (có log từng cửa sổ) **không vào SHOCK**: cú ngã có \|a\| 0,55..2,13 g — rơi
 tự do đủ, nhưng đập 2,13 < `impact_g` 2,2; cửa sổ sau model gán `STAND_TO_LIE` nên nhánh nhảy

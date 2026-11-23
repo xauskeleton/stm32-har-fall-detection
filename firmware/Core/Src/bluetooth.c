@@ -2,7 +2,6 @@
 #include "board_config.h"
 #include "fall_detect.h"
 #include "uart_dma.h"
-#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -24,8 +23,6 @@ static uart_dma_tx_t bt_dma = {
 };
 
 static uint32_t t_power_on = 0;
-static uint32_t t_last_send = 0;
-static int      prev_state = FALL_STATE_IDLE;
 
 /* Ten 12 hanh dong (tieng Anh) */
 static const char *const ACTION_NAMES[12] = {
@@ -43,9 +40,9 @@ static const char *action_name(int label)
 
 static const char *state_name(int fall_state)
 {
-    if (fall_state == FALL_STATE_FALLEN) return "FALL";
-    if (fall_state == FALL_STATE_SHOCK)  return "Impact";
-    return "Normal";
+    if (fall_state == FALL_STATE_FALLEN) return "FALLEN";
+    if (fall_state == FALL_STATE_SHOCK)  return "SHOCK";
+    return "IDLE";
 }
 
 static void uart_start(void)
@@ -92,7 +89,6 @@ void Bluetooth_Init(void)
     uart_start();
     UART_DMA_Init(&bt_dma);
     t_power_on = HAL_GetTick();
-    t_last_send = t_power_on;
 
     /* Tu kiem tra: in cau hinh UART4 ra USART1, roi gui thang 1 dong qua HC-05
      * (cho HC-05 khoi dong truoc). */
@@ -117,69 +113,15 @@ void Bluetooth_Send(const char *s)
     if (len > 0u) UART_DMA_Write(&bt_dma, s, (uint16_t)len);
 }
 
-static void fmt_vec3(char *dst, size_t sz, const float v[3])
+void Bluetooth_LogWindow(int label, const fall_state_t *fs, float a_min, float a_max)
 {
-    char x[10], y[10], z[10];
-    UART_FmtF2(x, sizeof x, v ? v[0] : 0.0f, 1);
-    UART_FmtF2(y, sizeof y, v ? v[1] : 0.0f, 1);
-    UART_FmtF2(z, sizeof z, v ? v[2] : 0.0f, 1);
-    snprintf(dst, sz, "(%s,%s,%s)", x, y, z);
-}
-
-void Bluetooth_Update(const bt_telemetry_t *t)
-{
-    uint32_t now = HAL_GetTick();
-
-    /* Su kien te nga / dung day: bao ngay, khong cho chu ky */
-    if (t->fall_state == FALL_STATE_FALLEN && prev_state != FALL_STATE_FALLEN) {
-        char msg[80], smin[12], smax[12];
-        UART_FmtF2(smin, sizeof smin, t->a_min, 0);
-        UART_FmtF2(smax, sizeof smax, t->a_max, 0);
-        snprintf(msg, sizeof msg,
-                 "!!! FALL DETECTED (|a|%s..%sg, r=%d,g=%d,l=%d) !!!\r\n",
-                 smin, smax, t->active_run, t->guard, t->laying);
-        Bluetooth_Send(msg);
-    } else if (t->fall_state != FALL_STATE_FALLEN && prev_state == FALL_STATE_FALLEN) {
-        Bluetooth_Send("Recovered\r\n");
-    }
-    prev_state = t->fall_state;
-
-    /* Dong trang thai + tham so debug dinh ky qua UART4 DMA */
-    if (booted() && now - t_last_send >= BT_SEND_MS) {
-        t_last_send = now;
-        char msg[256], smin[12], smax[12], sbat[12];
-        char v_grav[36], v_acc[36];
-        UART_FmtF2(smin, sizeof smin, t->a_min, 0);
-        UART_FmtF2(smax, sizeof smax, t->a_max, 0);
-        UART_FmtF2(sbat, sizeof sbat, t->bat_v, 0);
-        fmt_vec3(v_grav, sizeof v_grav, t->grav);
-        fmt_vec3(v_acc,  sizeof v_acc,  t->acc_raw);
-
-        int pa5_mv = (int)lroundf(t->bat_pa5_v * 1000.0f);
-        int gx = t->gyro_dps ? (int)lroundf(t->gyro_dps[0]) : 0;
-        int gy = t->gyro_dps ? (int)lroundf(t->gyro_dps[1]) : 0;
-        int gz = t->gyro_dps ? (int)lroundf(t->gyro_dps[2]) : 0;
-
-        int n;
-        if (t->bat_pct >= 0) {
-            n = snprintf(msg, sizeof msg,
-                         "%s | %s | |a|%s..%s | g%s | bat %sV (%d%%)\r\n",
-                         action_name(t->label), state_name(t->fall_state),
-                         smin, smax, v_grav, sbat, t->bat_pct);
-        } else {
-            n = snprintf(msg, sizeof msg,
-                         "%s | %s | |a|%s..%s | g%s | USB %sV\r\n",
-                         action_name(t->label), state_name(t->fall_state),
-                         smin, smax, v_grav, sbat);
-        }
-        if (n > 0 && (size_t)n < sizeof msg) {
-            snprintf(msg + n, sizeof msg - (size_t)n,
-                     "  dbg: acc%s | gyro(%+d,%+d,%+d dps) | sm(r=%d,g=%d,l=%d) | miss=%lu | adc=%lu(%d.%03dV)\r\n",
-                     v_acc, gx, gy, gz,
-                     t->active_run, t->guard, t->laying,
-                     (unsigned long)t->missed,
-                     (unsigned long)t->bat_adc, pa5_mv / 1000, pa5_mv % 1000);
-        }
-        Bluetooth_Send(msg);
-    }
+    char smin[10], smax[10], line[112];
+    UART_FmtF2(smin, sizeof smin, a_min, 0);
+    UART_FmtF2(smax, sizeof smax, a_max, 0);
+    snprintf(line, sizeof line,
+             "%s | %s | |a|%s..%s | r=%d g=%d l=%d t=%d s=%d u=%d\r\n",
+             action_name(label), state_name(fs->state), smin, smax,
+             fs->active_run, fs->guard, fs->laying, fs->timer,
+             fs->by_shock, fs->shock_upright);
+    Bluetooth_Send(line);
 }

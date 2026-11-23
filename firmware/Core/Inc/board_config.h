@@ -80,8 +80,5 @@
 #define BT_GPIO_AF          GPIO_AF8_UART4
 #define BT_BAUD             115200u  /* baud rate UART4 giao tiep HC-05 */
 #define BT_BOOT_MS          1000u    /* cho HC-05 khoi dong sau khi cap nguon */
-#define BT_SEND_MS          2000u    /* chu ky gui hanh dong + trang thai */
-#define BT_WINDOW_LOG       1        /* 1 = gui them 1 dong "W ..." MOI cua so (1.28 s) de
-                                      * thay du chuoi nhan khi thu nga; 0 = tat */
 
 #endif /* BOARD_CONFIG_H */

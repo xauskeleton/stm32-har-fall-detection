@@ -60,12 +60,6 @@ volatile uint32_t missed_sample_count = 0;
 ICM20948_int16_vector3 accel_data;
 ICM20948_int16_vector3 gyro_data;
 
-/* Ket qua phan loai gan nhat, de in ra UART moi 2 giay */
-static har_app_event_t last_ev = { 0, 0, 0, 0.0f, 0.0f };
-static uint32_t n_fall_total = 0;
-static float last_acc_raw[3] = { 0.0f, 0.0f, 0.0f };   /* truoc hoan vi, de hieu chuan */
-static float last_gyro_dps[3] = { 0.0f, 0.0f, 0.0f };
-
 #define U1_TXQ_SIZE 512u
 static uint8_t u1_txq[U1_TXQ_SIZE];
 static uart_dma_tx_t u1_dma = {
@@ -153,7 +147,7 @@ int main(void)
   printf("RGB LED self-test: red -> green -> blue\r\n");
   Battery_Init();          /* khoi tao LED RGB (co tu kiem tra 3 mau) + do pin */
   Battery_Show();          /* khoi dong: LED RGB bao muc pin 3 s */
-  Bluetooth_Init();        /* HC-05 luon bat, gui trang thai moi 2 s */
+  Bluetooth_Init();        /* HC-05 luon bat, kenh log duy nhat: 1 dong moi cua so */
 
   static button_t btn_bat  = BUTTON_INIT(BTN_BAT_PORT, BTN_BAT_PIN);
 
@@ -184,70 +178,6 @@ int main(void)
     if (Button_Pressed(&btn_bat)) Battery_Show();
     Battery_Update();                               /* do pin + mau LED RGB */
     Buzzer_Update();
-    const fall_state_t *fs = har_app_fall_state();
-    float gv[3];
-    har_app_gravity(gv);
-
-    /* Gui hanh dong + trang thai + toan bo tham so debug qua UART4 Bluetooth (DMA) */
-    bt_telemetry_t bt = {
-        .label      = last_ev.label,
-        .fall_state = fs->state,
-        .a_min      = last_ev.a_min,
-        .a_max      = last_ev.a_max,
-        .acc_raw    = last_acc_raw,
-        .gyro_dps   = last_gyro_dps,
-        .grav       = gv,
-        .active_run = fs->active_run,
-        .guard      = fs->guard,
-        .laying     = fs->laying,
-        .missed     = missed_sample_count,
-        .bat_v      = Battery_GetVoltage(),
-        .bat_pct    = Battery_IsPresent() ? (int)Battery_GetPercent() : -1,
-        .bat_adc    = g_bat_adc_raw,
-        .bat_pa5_v  = g_bat_pa5_v,
-    };
-    Bluetooth_Update(&bt);
-
-    /* --- in trang thai + tham so debug ra USART1 (DMA) moi 2 giay --- */
-    static uint32_t last_uart_time = 0;
-    if (HAL_GetTick() - last_uart_time >= 2000) {
-      last_uart_time = HAL_GetTick();
-      const char *state_name = (fs->state == FALL_STATE_IDLE)  ? "IDLE"
-                             : (fs->state == FALL_STATE_SHOCK) ? "SHOCK" : "FALLEN";
-      char ax[10], ay[10], az[10], gx[10], gy[10], gz[10], amin[10], amax[10];
-      UART_FmtF2(ax, sizeof ax, last_acc_raw[0], 1);
-      UART_FmtF2(ay, sizeof ay, last_acc_raw[1], 1);
-      UART_FmtF2(az, sizeof az, last_acc_raw[2], 1);
-      UART_FmtF2(gx, sizeof gx, gv[0], 1);
-      UART_FmtF2(gy, sizeof gy, gv[1], 1);
-      UART_FmtF2(gz, sizeof gz, gv[2], 1);
-      UART_FmtF2(amin, sizeof amin, last_ev.a_min, 0);
-      UART_FmtF2(amax, sizeof amax, last_ev.a_max, 0);
-
-      printf("%-18s | %-6s | acc(%s %s %s) | gyro(%+d %+d %+d dps)"
-             " | grav(%s %s %s) | |a| %s..%s g | falls:%lu"
-             " | sm(r=%d,g=%d,l=%d) | missed:%lu\r\n",
-             har_label_name(last_ev.label), state_name,
-             ax, ay, az,
-             (int)lroundf(last_gyro_dps[0]), (int)lroundf(last_gyro_dps[1]),
-             (int)lroundf(last_gyro_dps[2]),
-             gx, gy, gz, amin, amax,
-             (unsigned long)n_fall_total,
-             fs->active_run, fs->guard, fs->laying,
-             (unsigned long)missed_sample_count);
-
-      char sbv[12];
-      UART_FmtF2(sbv, sizeof sbv, Battery_GetVoltage(), 0);
-      int pa5_mv = (int)lroundf(g_bat_pa5_v * 1000.0f);
-      if (Battery_IsPresent()) {
-        printf("Battery: %s V (%u%%) | adc=%lu pa5=%d.%03dV\r\n",
-               sbv, (unsigned)Battery_GetPercent(),
-               (unsigned long)g_bat_adc_raw, pa5_mv / 1000, pa5_mv % 1000);
-      } else {
-        printf("Battery: no battery (USB power) | raw=%s V adc=%lu pa5=%d.%03dV\r\n",
-               sbv, (unsigned long)g_bat_adc_raw, pa5_mv / 1000, pa5_mv % 1000);
-      }
-    }
 
     /* --- moi mau o 50 Hz --- */
     if (flag_sample_imu) {
@@ -271,43 +201,13 @@ int main(void)
       gyro[1] = ((float)gyro_data.y / 32.768f) * DEG2RAD;
       gyro[2] = ((float)gyro_data.z / 32.768f) * DEG2RAD;
 
-      last_acc_raw[0] = acc[0];
-      last_acc_raw[1] = acc[1];
-      last_acc_raw[2] = acc[2];
-      last_gyro_dps[0] = (float)gyro_data.x / 32.768f;
-      last_gyro_dps[1] = (float)gyro_data.y / 32.768f;
-      last_gyro_dps[2] = (float)gyro_data.z / 32.768f;
-
       har_app_event_t ev;
       if (har_app_on_sample(acc, gyro, &ev)) {
-        last_ev = ev;
-#if BT_WINDOW_LOG
-        {
-          /* 1 dong moi cua so: nhan + trang thai + |a| + bo dem may trang thai.
-           * s = by_shock, u = shock_upright. Dong trang thai 2 s bo sot cua so. */
-          const fall_state_t *ws = har_app_fall_state();
-          const char *wst = (ws->state == FALL_STATE_IDLE)  ? "IDLE"
-                          : (ws->state == FALL_STATE_SHOCK) ? "SHOCK" : "FALLEN";
-          char wmin[10], wmax[10], wline[112];
-          UART_FmtF2(wmin, sizeof wmin, ev.a_min, 0);
-          UART_FmtF2(wmax, sizeof wmax, ev.a_max, 0);
-          snprintf(wline, sizeof wline,
-                   "W %s | %s | |a|%s..%s | r=%d g=%d l=%d t=%d s=%d u=%d\r\n",
-                   har_label_name(ev.label), wst, wmin, wmax,
-                   ws->active_run, ws->guard, ws->laying, ws->timer,
-                   ws->by_shock, ws->shock_upright);
-          Bluetooth_Send(wline);
-        }
-#endif
-        if (ev.fall) {
-          n_fall_total++;
-          Buzzer_Start();
-          printf("!!! FALL DETECTED !!!\r\n");
-        }
-        if (ev.recovered) {
-          Buzzer_Stop();
-          printf("Recovered from fall\r\n");
-        }      }
+        /* Log DUY NHAT: 1 dong qua Bluetooth moi cua so (1.28 s) */
+        Bluetooth_LogWindow(ev.label, har_app_fall_state(), ev.a_min, ev.a_max);
+        if (ev.fall)      Buzzer_Start();
+        if (ev.recovered) Buzzer_Stop();
+      }
     }
   }
   /* USER CODE END 3 */
