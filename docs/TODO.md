@@ -48,7 +48,7 @@ cứng copy từ branch `Embeded_System` — bản đó **đã build và chạy 
 sửa lại, chỉ thay phần thuật toán.
 
 - [x] `icm20948.c` + `.h` — driver I2C1 400 kHz, địa chỉ 0x68, có xử lý chuyển bank thanh ghi
-- [x] `main.c` — CubeMX sinh (clock 180 MHz, GPIO, I2C1, USART1, TIM6 50 Hz), chỉ sửa trong các
+- [x] `main.c` — CubeMX sinh (clock 180 MHz, GPIO, I2C1, TIM6 50 Hz), chỉ sửa trong các
       khối `USER CODE`: đọc cảm biến → đổi đơn vị (±4 g → g, ±1000 dps → rad/s) →
       `har_app_on_sample()` → mỗi cửa sổ gửi 1 dòng log qua Bluetooth; té ngã thì còi kêu và
       LED RGB đỏ liên tục

@@ -51,7 +51,6 @@ extern "C" {
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
-void UART1_DMA_IRQHandler(void);
 
 /* USER CODE BEGIN EFP */
 

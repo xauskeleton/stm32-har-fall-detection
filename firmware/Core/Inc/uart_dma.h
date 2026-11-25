@@ -1,5 +1,5 @@
 /* Truyen UART TX khong chan bang DMA + hang doi vong.
- * Dung chung cho USART1 (DMA2 Stream 7 Ch 4) va UART4 (DMA1 Stream 4 Ch 4).
+ * Hien chi UART4 dung (DMA1 Stream 4 Ch 4, Bluetooth).
  */
 #ifndef UART_DMA_H
 #define UART_DMA_H

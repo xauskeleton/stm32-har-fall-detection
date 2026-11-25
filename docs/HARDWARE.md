@@ -71,7 +71,7 @@ Khớp đúng `fs = 50 Hz` của HAPT, không có sai số tần số.
 
 | | Giá trị | Nguồn |
 |---|---|---|
-| UART | USART1, chế độ async (in nhãn + trạng thái) | `test.ioc: USART1.VirtualMode` |
+| UART | UART4 qua HC-05, 115200 baud, DMA1 Stream 4 (in nhãn + trạng thái); không dùng USART1 | `bluetooth.c` |
 | LED trạng thái | **PC1, PC2, PC3** | `main.c:201-207` |
 | Chân ra khác | PC4, PC5 | `test.ioc` |
 | Chân vào | PC9, PC10, PC11, PC12 | `test.ioc` |

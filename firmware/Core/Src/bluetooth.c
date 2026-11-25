@@ -23,6 +23,7 @@ static uart_dma_tx_t bt_dma = {
 };
 
 static uint32_t t_power_on = 0;
+static bool bt_ready = false;      /* UART4 + DMA da khoi tao xong */
 
 /* Ten 12 hanh dong (tieng Anh). Len / xuong cau thang hien chung la "Walking" -
  * chi doi ten hien thi, model va may trang thai van phan biet 12 nhan. */
@@ -90,16 +91,11 @@ void Bluetooth_Init(void)
     uart_start();
     UART_DMA_Init(&bt_dma);
     t_power_on = HAL_GetTick();
+    bt_ready = true;
 
-    /* Tu kiem tra: in cau hinh UART4 ra USART1, roi gui thang 1 dong qua HC-05
-     * (cho HC-05 khoi dong truoc). */
-    printf("UART4 DMA: CR1=0x%04lX CR3=0x%04lX BRR=%lu (PCLK1=%lu) | PA MODER=0x%08lX AFRL=0x%08lX\r\n",
-           (unsigned long)BT_UART->CR1, (unsigned long)BT_UART->CR3,
-           (unsigned long)BT_UART->BRR, (unsigned long)HAL_RCC_GetPCLK1Freq(),
-           (unsigned long)GPIOA->MODER, (unsigned long)GPIOA->AFR[0]);
+    /* Tu kiem tra: cho HC-05 khoi dong xong roi gui thang 1 dong qua no. */
     HAL_Delay(BT_BOOT_MS);
     UART_DMA_Write(&bt_dma, "HC-05 OK\r\n", 10u);
-    printf("UART4: sent \"HC-05 OK\" via A0 (DMA1 Stream4)\r\n");
 }
 
 void Bluetooth_DMA_IRQHandler(void)
@@ -107,11 +103,16 @@ void Bluetooth_DMA_IRQHandler(void)
     UART_DMA_IRQHandler(&bt_dma);
 }
 
+void Bluetooth_Write(const char *data, uint16_t len)
+{
+    if (!bt_ready || !booted() || !data || len == 0u) return;
+    UART_DMA_Write(&bt_dma, data, len);
+}
+
 void Bluetooth_Send(const char *s)
 {
-    if (!booted() || !s) return;
-    size_t len = strlen(s);
-    if (len > 0u) UART_DMA_Write(&bt_dma, s, (uint16_t)len);
+    if (!s) return;
+    Bluetooth_Write(s, (uint16_t)strlen(s));
 }
 
 void Bluetooth_LogWindow(int label, const fall_state_t *fs, float a_min, float a_max,

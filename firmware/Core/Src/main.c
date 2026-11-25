@@ -28,7 +28,6 @@
 #include "buzzer.h"
 #include "buttons.h"
 #include "bluetooth.h"
-#include "uart_dma.h"
 #include <math.h>
 #include <stdio.h>
 /* USER CODE END Includes */
@@ -51,28 +50,12 @@
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 
-UART_HandleTypeDef huart1;
-
 /* USER CODE BEGIN PV */
 volatile uint8_t flag_sample_imu = 0;
 volatile uint32_t missed_sample_count = 0;
 
 ICM20948_int16_vector3 accel_data;
 ICM20948_int16_vector3 gyro_data;
-
-#define U1_TXQ_SIZE 512u
-static uint8_t u1_txq[U1_TXQ_SIZE];
-static uart_dma_tx_t u1_dma = {
-    .uart       = USART1,
-    .dma        = DMA2,
-    .stream     = DMA2_Stream7,
-    .channel    = 4u,
-    .stream_idx = 7u,
-    .irqn       = DMA2_Stream7_IRQn,
-    .buf        = u1_txq,
-    .size       = U1_TXQ_SIZE,
-};
-static uint8_t u1_dma_ready = 0;
 
 #define DEG2RAD 0.0174532925f
 /* USER CODE END PV */
@@ -81,30 +64,25 @@ static uint8_t u1_dma_ready = 0;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
-static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 static void MX_TIM6_Init(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+/* printf di qua Bluetooth (UART4) - kenh truyen DUY NHAT cua thiet bi.
+ * Goi truoc Bluetooth_Init() thi du lieu bi bo qua, khong treo. */
 int __io_putchar(int ch) {
-    uint8_t c = (uint8_t)ch;
-    if (u1_dma_ready) UART_DMA_Write(&u1_dma, &c, 1u);
-    else              HAL_UART_Transmit(&huart1, &c, 1, HAL_MAX_DELAY);
+    char c = (char)ch;
+    Bluetooth_Write(&c, 1u);
     return ch;
 }
 
 int _write(int file, char *ptr, int len) {
     (void)file;
     if (len <= 0) return 0;
-    if (u1_dma_ready) UART_DMA_Write(&u1_dma, ptr, (uint16_t)len);
-    else              HAL_UART_Transmit(&huart1, (uint8_t *)ptr, (uint16_t)len, HAL_MAX_DELAY);
+    Bluetooth_Write(ptr, (uint16_t)len);
     return len;
-}
-
-void UART1_DMA_IRQHandler(void) {
-    UART_DMA_IRQHandler(&u1_dma);
 }
 /* USER CODE END 0 */
 
@@ -138,16 +116,12 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_I2C1_Init();
-  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  UART_DMA_Init(&u1_dma);
-  u1_dma_ready = 1;
   har_app_reset();
   Buzzer_Init();
-  printf("RGB LED self-test: red -> green -> blue\r\n");
   Battery_Init();          /* khoi tao LED RGB (co tu kiem tra 3 mau) + do pin */
   Battery_Show();          /* khoi dong: LED RGB bao muc pin 3 s */
-  Bluetooth_Init();        /* HC-05 luon bat, kenh log duy nhat: 1 dong moi cua so */
+  Bluetooth_Init();        /* HC-05 luon bat, kenh truyen duy nhat (ca printf) */
 
   static button_t btn_bat  = BUTTON_INIT(BTN_BAT_PORT, BTN_BAT_PIN);
 
@@ -158,7 +132,7 @@ int main(void)
       ICM20948_WriteRegister(&ICM20948_REG_GYRO_CONFIG_1, ICM20948_GYRO_FCHOICE | ICM20948_GYRO_FS_SEL_1000);
       i2c_ok = 1;
   } else {
-      printf("Error: failed to read ICM-20948 over I2C\r\n");
+      Bluetooth_Send("Error: failed to read ICM-20948 over I2C\r\n");
   }
   /* KHONG khoi tao tu ke: HAPT thu bang dien thoai chi co acc + gyro, nen dua
    * them tu ke vao luc inference se tao ra dac trung ma model chua tung thay. */
@@ -298,39 +272,6 @@ static void MX_I2C1_Init(void)
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */
-
-}
-
-/**
-  * @brief USART1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USART1_UART_Init(void)
-{
-
-  /* USER CODE BEGIN USART1_Init 0 */
-
-  /* USER CODE END USART1_Init 0 */
-
-  /* USER CODE BEGIN USART1_Init 1 */
-
-  /* USER CODE END USART1_Init 1 */
-  huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
-  huart1.Init.WordLength = UART_WORDLENGTH_8B;
-  huart1.Init.StopBits = UART_STOPBITS_1;
-  huart1.Init.Parity = UART_PARITY_NONE;
-  huart1.Init.Mode = UART_MODE_TX_RX;
-  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USART1_Init 2 */
-
-  /* USER CODE END USART1_Init 2 */
 
 }
 

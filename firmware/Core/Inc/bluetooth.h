@@ -1,4 +1,5 @@
-/* HC-05 qua UART4 (DMA1 Stream 4), LUON BAT. Kenh log DUY NHAT cua thiet bi:
+/* HC-05 qua UART4 (DMA1 Stream 4), LUON BAT. Kenh truyen DUY NHAT cua thiet bi
+ * (khong con USART1 / cong USB UART; printf cung di qua day):
  * moi cua so phan loai (64 mau = 1.28 s) gui 1 dong
  *
  *   "Walking | SHOCK | amin=0.55 amax=2.13 | battery 84%"
@@ -25,6 +26,10 @@ void Bluetooth_LogWindow(int label, const fall_state_t *fs, float a_min, float a
 
 /* Dua 1 chuoi vao hang doi DMA; bo qua neu HC-05 chua khoi dong xong */
 void Bluetooth_Send(const char *s);
+
+/* Nhu tren nhung theo do dai; _write() cua printf goi ham nay.
+ * An toan khi goi truoc Bluetooth_Init(): du lieu bi bo qua. */
+void Bluetooth_Write(const char *data, uint16_t len);
 
 /* Goi tu DMA1_Stream4_IRQHandler trong stm32f4xx_it.c */
 void Bluetooth_DMA_IRQHandler(void);

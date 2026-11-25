@@ -226,9 +226,4 @@ void DMA1_Stream4_IRQHandler(void)
 {
   Bluetooth_DMA_IRQHandler();
 }
-
-void DMA2_Stream7_IRQHandler(void)
-{
-  UART1_DMA_IRQHandler();
-}
 /* USER CODE END 1 */

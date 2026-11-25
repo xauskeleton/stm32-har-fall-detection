@@ -164,7 +164,7 @@ cửa sổ liên tiếp** mới huỷ; vào SHOCK bằng nhánh nhãn thì vẫn
 
 Log giờ chỉ còn **một** loại, chỉ qua Bluetooth: mỗi cửa sổ một dòng
 `Walking | SHOCK | amin=0.55 amax=2.13 | battery 84%` (`Bluetooth_LogWindow()`).
-Log 2 s cũ bỏ sót cửa sổ nên không dùng được để phân tích cú ngã. USART1 chỉ còn vài dòng lúc khởi động.
+Log 2 s cũ bỏ sót cửa sổ nên không dùng được để phân tích cú ngã. USART1 và cổng USB UART đã gỡ hẳn khỏi firmware: Bluetooth là kênh truyền duy nhất, `printf` cũng đi qua UART4.
 
 Lần thử thứ ba (có log từng cửa sổ) **không vào SHOCK**: cú ngã có \|a\| 0,55..2,13 g — rơi
 tự do đủ, nhưng đập 2,13 < `impact_g` 2,2; cửa sổ sau model gán `STAND_TO_LIE` nên nhánh nhảy

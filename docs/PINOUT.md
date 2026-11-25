@@ -3,7 +3,7 @@
 Nguồn sự thật là `firmware/Core/Inc/board_config.h` và `firmware/test.ioc`. Đổi chân thì sửa
 `board_config.h` rồi cập nhật lại file này.
 
-`test.ioc` chỉ khai báo các chân CubeMX sinh code (I2C1, USART1, SWD, HSE, PC1–PC5, PC9–PC12).
+`test.ioc` chỉ khai báo các chân CubeMX sinh code (I2C1, SWD, HSE, PC1–PC5, PC9–PC12).
 Các chân PA0, PA1, PA5, PA8, PB1, PB3, PB4, PB5 do code tự khởi tạo trong `battery.c`,
 `buzzer.c`, `rgb_led.c`, `bluetooth.c` — CubeMX không biết, nên đừng gán chúng cho ngoại vi khác
 trong CubeMX.
@@ -33,7 +33,7 @@ Nối UART phải bắt chéo: TX của STM32 vào RXD của HC-05, RX của STM
 | Chân MCU | Chức năng | Ghi chú |
 |---|---|---|
 | PB8 / PB9 | I2C1 SCL / SDA | ICM-20948, 400 kHz, địa chỉ 0x68, ±4 g / ±1000 dps |
-| PA9 / PA10 | USART1 TX / RX | Cổng USB UART, 115200 baud, DMA2 Stream 7. Chỉ in vài dòng lúc khởi động |
+| PA9 / PA10 | Không dùng | Trước đây là USART1 ra cổng USB UART; đã gỡ, mọi dữ liệu đi qua Bluetooth |
 | PA5 | ADC1 kênh 5 | Đo điện áp pin qua mạch chia 10 lần + diode SS54: V_pin = ADC × 3,3 / 4095 × 10 + 0,33 V |
 | PC9 | Nút KEY1 (X2) | Input pull-up, song song nút ngoài hộp. Nhấn = xem pin |
 | PA13 / PA14 | SWDIO / SWCLK | Nạp code qua ST-Link — không dùng cho việc khác |
